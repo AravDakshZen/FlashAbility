@@ -1,7 +1,6 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { CardVisual } from "@/components/decks/card-visual";
 import type { FlashCard } from "@/types/decks";
@@ -21,6 +20,38 @@ type PracticeCardProps = {
 
 const SWIPE_THRESHOLD = 60;
 
+type ActionAnimation = {
+  animate: Record<string, number[]>;
+  transition: Record<string, number | string | number[]>;
+};
+
+// Tiny action-verb animations, played when the card is flipped in Learning mode.
+const ease = "easeInOut";
+const actionMotions: Record<string, ActionAnimation> = {
+  jump: { animate: { y: [0, -46, 0] }, transition: { duration: 0.9, repeat: Infinity, ease } },
+  run: { animate: { x: [-20, 20] }, transition: { duration: 0.55, repeat: Infinity, ease } },
+  eat: { animate: { scale: [1, 1.25, 1] }, transition: { duration: 0.7, repeat: Infinity, ease } },
+  drink: { animate: { rotate: [0, -12, 0, 10, 0] }, transition: { duration: 1, repeat: Infinity, ease } },
+  sleep: { animate: { opacity: [1, 0.45, 1] }, transition: { duration: 1.6, repeat: Infinity, ease } },
+  swim: { animate: { y: [0, -6, 0], x: [0, 10, 0] }, transition: { duration: 1, repeat: Infinity, ease } },
+  clap: { animate: { x: [-4, 4, -4] }, transition: { duration: 0.35, repeat: Infinity, ease } },
+  wave: { animate: { rotate: [0, -16, 16, -16, 0] }, transition: { duration: 0.8, repeat: Infinity, ease } },
+  laugh: { animate: { x: [0, -6, 6, -4, 0], rotate: [0, -5, 5, -3, 0] }, transition: { duration: 0.5, repeat: Infinity, ease: "easeInOut" } },
+  cry: { animate: { y: [0, -5, 0] }, transition: { duration: 0.7, repeat: Infinity, ease } },
+  dance: { animate: { rotate: [0, 9, -9, 0] }, transition: { duration: 0.8, repeat: Infinity, ease } },
+  sit: { animate: { y: [0, 12, 0] }, transition: { duration: 0.9, repeat: Infinity, ease } },
+  stand: { animate: { y: [0, -12, 0] }, transition: { duration: 0.9, repeat: Infinity, ease } },
+  throw: { animate: { y: [0, -20, 0], rotate: [0, 30, -15, 0] }, transition: { duration: 0.9, repeat: Infinity, ease } },
+  kick: { animate: { rotate: [0, -16, 0] }, transition: { duration: 0.6, repeat: Infinity, ease } },
+  crawl: { animate: { x: [-16, 16] }, transition: { duration: 1.4, repeat: Infinity, ease } },
+  hug: { animate: { scale: [1, 1.2, 1] }, transition: { duration: 0.8, repeat: Infinity, ease } },
+  draw: { animate: { x: [-6, 6], y: [0, -4, 0] }, transition: { duration: 0.5, repeat: Infinity, ease } },
+};
+
+function actionMotion(front: string): ActionAnimation | null {
+  return actionMotions[front.toLowerCase()] ?? null;
+}
+
 export function PracticeCard({
   card,
   accent,
@@ -33,6 +64,7 @@ export function PracticeCard({
 }: PracticeCardProps) {
   const hideFrontWord = practiceLevel === 3;
   const showHint = practiceLevel === 1;
+  const action = actionMotion(card.front);
 
   return (
     <motion.div
@@ -47,7 +79,7 @@ export function PracticeCard({
       }
       onTap={onFlip}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === " ") {
           e.preventDefault();
           onFlip();
         }
@@ -112,6 +144,10 @@ export function PracticeCard({
                   <CardVisual image={card.image} />
                 </motion.div>
 
+                <span className="font-heading text-center text-4xl font-bold tracking-tight sm:text-5xl">
+                  {card.front}
+                </span>
+
                 {showHint ? (
                   <span className="text-center text-xl font-semibold leading-snug text-muted-foreground sm:text-2xl">
                     {card.back ?? `This is a ${card.front}`}
@@ -140,14 +176,25 @@ export function PracticeCard({
               </div>
 
               <div className="my-auto flex flex-col items-center justify-center gap-5">
-                <motion.span
-                  className="text-4xl"
-                  aria-hidden="true"
-                  animate={reduceMotion ? {} : { scale: [1, 1.15, 1], rotate: [0, -6, 6, 0] }}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  💬
-                </motion.span>
+                {action ? (
+                  <motion.span
+                    className="text-6xl sm:text-7xl"
+                    aria-hidden="true"
+                    animate={reduceMotion ? {} : action.animate}
+                    transition={reduceMotion ? undefined : action.transition}
+                  >
+                    <CardVisual image={card.image} />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    className="text-4xl"
+                    aria-hidden="true"
+                    animate={reduceMotion ? {} : { scale: [1, 1.15, 1], rotate: [0, -6, 6, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    💬
+                  </motion.span>
+                )}
                 {hideFrontWord ? (
                   <span className="break-words text-center text-4xl font-black tracking-tight sm:text-5xl">
                     {card.front}
@@ -169,28 +216,6 @@ export function PracticeCard({
           )}
         </AnimatePresence>
       </div>
-
-      {onSwipeLeft ? (
-        <motion.span
-          aria-hidden="true"
-          className="absolute right-1 top-1/2 z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground shadow-sm backdrop-blur"
-          animate={reduceMotion ? {} : { x: [0, -10, 0] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <ChevronRight className="size-6" />
-        </motion.span>
-      ) : null}
-
-      {onSwipeRight ? (
-        <motion.span
-          aria-hidden="true"
-          className="absolute left-1 top-1/2 z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground shadow-sm backdrop-blur"
-          animate={reduceMotion ? {} : { x: [0, 10, 0] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <ChevronLeft className="size-6" />
-        </motion.span>
-      ) : null}
     </motion.div>
   );
 }

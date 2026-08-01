@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { FlashCardImage } from "@/types/decks";
+import { CardIcon } from "@/components/decks/card-icon";
 
 const SHAPE_PATHS: Record<string, React.ReactNode> = {
   circle: <circle cx="50" cy="50" r="40" />,
@@ -75,5 +76,7 @@ export function CardVisual({ image }: { image?: FlashCardImage }) {
         </span>
       );
     }
+    case "icon":
+      return <CardIcon name={image.value} className="size-28 sm:size-32" />;
   }
 }

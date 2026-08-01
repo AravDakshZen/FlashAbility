@@ -4,9 +4,9 @@
  *
  * Serves the contents of `out/` (created by `next build` with `output: "export"`)
  * over HTTP. Maps Next.js clean URLs ("/decks/animals") to their generated
- * ".html" / ".txt" / "index.html" files, serves pre-gzipped ".gz" variants when
- * the client accepts gzip, sets correct MIME types and caching headers, and guards
- * against path traversal.
+ * ".html" / ".txt" / "index.html" files, serves pre-compressed ".br" / ".gz"
+ * variants (brotli preferred, then gzip) when the client accepts them, sets
+ * correct MIME types and caching headers, and guards against path traversal.
  *
  * Run:        node deploy/serve.mjs [PORT] [ROOT]
  * Defaults:   PORT=8080, ROOT=out
@@ -86,22 +86,32 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const acceptsGzip = /\bgzip\b/.test(req.headers["accept-encoding"] || "");
-  const gzFile = acceptsGzip ? `${file}.gz` : null;
-  const useGz = gzFile && existsSync(gzFile);
+  const enc = (req.headers["accept-encoding"] || "").toLowerCase();
+
+  // Pick the best available encoding: brotli preferred, then gzip.
+  let encoding = null;
+  let servedPath = file;
+  if (/\bbr\b/.test(enc) && existsSync(`${file}.br`)) {
+    encoding = "br";
+    servedPath = `${file}.br`;
+  } else if (/\bgzip\b/.test(enc) && existsSync(`${file}.gz`)) {
+    encoding = "gzip";
+    servedPath = `${file}.gz`;
+  }
 
   const mime = mimeFor(file);
   const isAsset = file.includes(`${sep}_next${sep}`) || /\.(woff2?|ico)$/.test(file);
 
   const headers = {
     "Content-Type": mime,
+    // The `.gz` / `.br` variants are immutable once a build is deployed.
     "Cache-Control": isAsset ? "public, max-age=31536000, immutable" : "no-cache",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
   };
-  if (useGz) headers["Content-Encoding"] = "gzip";
+  if (encoding) headers["Content-Encoding"] = encoding;
 
-  const stream = createReadStream(useGz ? gzFile : file);
+  const stream = createReadStream(servedPath);
   res.writeHead(200, headers);
   stream.pipe(res);
   stream.on("error", () => {

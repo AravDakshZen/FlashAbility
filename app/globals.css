@@ -197,7 +197,7 @@ html[data-text-size="xl"] {
 
 @font-face {
   font-family: "OpenDyslexic";
-  src: url("https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic-regular.woff") format("woff");
+  src: url("/fonts/open-dyslexic-regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -205,16 +205,52 @@ html[data-text-size="xl"] {
 
 @font-face {
   font-family: "OpenDyslexic";
-  src: url("https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic-bold.woff") format("woff");
+  src: url("/fonts/open-dyslexic-bold.woff") format("woff");
   font-weight: bold;
   font-style: normal;
   font-display: swap;
 }
 
-/* Dyslexia-friendly mode: OpenDyslexic font + open spacing. */
+/* Dyslexia-friendly mode: OpenDyslexic font + open spacing + a warm,
+   lower-glare palette. Research on dyslexia accessibility recommends avoiding
+   pure black on pure white (high brightness contrast feels harsh to many
+   dyslexic readers), so we shift to a soft cream + warm charcoal. */
 html.dyslexia {
   --font-sans: "OpenDyslexic", var(--font-dyslexia), sans-serif;
   --font-heading: "OpenDyslexic", var(--font-dyslexia), sans-serif;
+  --background: #fbf5e6;
+  --foreground: #37322b;
+  --card: #fdf9ef;
+  --card-foreground: #37322b;
+  --popover: #fdf9ef;
+  --popover-foreground: #37322b;
+  --secondary: #f0e9d6;
+  --secondary-foreground: #37322b;
+  --muted: #f0e9d6;
+  --muted-foreground: #6e6556;
+  --accent: #e9e0c9;
+  --accent-foreground: #37322b;
+  --border: #e3d8c0;
+  --input: #d8ccb1;
+  --ring: #8a6d43;
+}
+
+html.dyslexia.dark {
+  --background: #1e1b17;
+  --foreground: #f0e9d6;
+  --card: #262219;
+  --card-foreground: #f0e9d6;
+  --popover: #262219;
+  --popover-foreground: #f0e9d6;
+  --secondary: #322d24;
+  --secondary-foreground: #f0e9d6;
+  --muted: #322d24;
+  --muted-foreground: #b8ac96;
+  --accent: #322d24;
+  --accent-foreground: #f0e9d6;
+  --border: #3a342a;
+  --input: #4a423a;
+  --ring: #c9a86a;
 }
 
 html.dyslexia body {

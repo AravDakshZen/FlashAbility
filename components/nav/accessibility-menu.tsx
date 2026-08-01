@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Accessibility,
   Check,
   Contrast,
   Keyboard,
   Moon,
+  PersonStanding,
   Sun,
   Type,
   Volume2,
@@ -93,7 +93,7 @@ export function AccessibilityMenu({
                 className
               )}
             >
-              <Accessibility
+              <PersonStanding
                 className={cn("size-4", variant === "utility" && "size-3.5", isFloating && "size-6")}
                 aria-hidden="true"
               />
@@ -196,7 +196,7 @@ export function AccessibilityMenu({
             onClick={() => toggleBoolean("reduceMotion", "Reduced motion")}
             className="min-h-11"
           >
-            <Accessibility aria-hidden="true" />
+            <PersonStanding aria-hidden="true" />
             Reduced Motion
             {settings.reduceMotion ? (
               <Check className="ml-auto" aria-hidden="true" />

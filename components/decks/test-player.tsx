@@ -124,9 +124,14 @@ export function TestPlayer({ deck }: { deck: Deck }) {
   const celebrationIdRef = useRef(0);
 
   const questions: Question[] = useMemo(() => {
-    const allPoolCards = decks.flatMap((d) => d.cards);
     const distractorCount = testLevel === 1 ? 1 : 3;
     const targetCards = deck.cards.slice(0, 10);
+
+    // Answer options stay within similar cards — never mix unrelated
+    // categories. "categoryPool" is every card from decks of this category.
+    const categoryPool = decks
+      .filter((d) => d.category === deck.category)
+      .flatMap((d) => d.cards);
 
     const allCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -158,16 +163,21 @@ export function TestPlayer({ deck }: { deck: Deck }) {
         };
       }
 
-      // Colour cards should only ever be offered as colour swatches — never
-      // mixed with emoji/photo distractors.
-      if (targetCard.image?.type === "colour") {
-        const sameDeck = seededShuffle(
+      // Colour / shape cards are only ever offered as the same visual type —
+      // colour swatches with colour swatches, shapes with shapes — never mixed
+      // with emoji/photo/number distractors.
+      if (
+        targetCard.image?.type === "colour" ||
+        targetCard.image?.type === "shape"
+      ) {
+        const sameType = seededShuffle(
           deck.cards.filter(
-            (c) => c.image?.type === "colour" && c.id !== targetCard.id
+            (c) =>
+              c.image?.type === targetCard.image?.type && c.id !== targetCard.id
           ),
           rng
         );
-        const distractorCards = sameDeck.slice(0, distractorCount);
+        const distractorCards = sameType.slice(0, distractorCount);
         const options = seededShuffle([targetCard, ...distractorCards], rng);
         return {
           mode: "standard",
@@ -180,20 +190,25 @@ export function TestPlayer({ deck }: { deck: Deck }) {
       const sameDeckPool = deck.cards.filter(
         (c) => c.id !== targetCard.id && c.front !== targetCard.front
       );
-      const allPool = allPoolCards.filter(
+      const similarPool = categoryPool.filter(
         (c) => c.id !== targetCard.id && c.front !== targetCard.front
       );
 
       let distractorCards: FlashCard[];
       if (testLevel === 3) {
+        // Hard: closest options from the same deck, topped up within category.
         const sameDeck = seededShuffle(sameDeckPool, rng);
         const needed = distractorCount - sameDeck.length;
-        const others = seededShuffle(allPool, rng)
+        const others = seededShuffle(similarPool, rng)
           .filter((c) => !sameDeck.includes(c))
           .slice(0, Math.max(0, needed));
         distractorCards = [...sameDeck, ...others].slice(0, distractorCount);
       } else {
-        distractorCards = seededShuffle(allPool, rng).slice(0, distractorCount);
+        // Easy/medium: variety, but only within the same category.
+        distractorCards = seededShuffle(similarPool, rng).slice(
+          0,
+          distractorCount
+        );
       }
 
       const options = seededShuffle([targetCard, ...distractorCards], rng);
@@ -201,7 +216,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
 
       return { mode: "standard", card: targetCard, promptText, options };
     });
-  }, [deck.cards, deck.id, testLevel]);
+  }, [deck.cards, deck.id, deck.category, testLevel]);
 
   const currentQ = questions[questionIndex] ?? questions[0];
   const total = questions.length;
