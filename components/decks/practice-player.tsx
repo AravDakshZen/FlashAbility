@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   AnimatePresence,
   motion,
-  useReducedMotion,
 } from "framer-motion";
 import {
   ArrowLeft,
@@ -29,6 +28,7 @@ import {
   recordSession,
 } from "@/lib/rewards";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/tts";
+import { useReducedMotionSafe } from "@/lib/hooks/use-reduced-motion";
 import type { Deck } from "@/types/decks";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,7 @@ function shuffle<T>(input: T[]): T[] {
 }
 
 export function PracticePlayer({ deck }: { deck: Deck }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   const [phase, setPhase] = useState<Phase>("practice");
   const [order, setOrder] = useState(() => deck.cards.map((c) => c.id));
@@ -73,6 +73,14 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
   const summarySaved = useRef(false);
   const floatId = useRef(0);
   const prevLevel = useRef(1);
+
+  // Deferred to the client: `isTtsSupported()` reads `typeof window`, which is
+  // false during SSR — branching on it in the first render would mismatch.
+  const ttsSupported = useSyncExternalStore(
+    () => () => {},
+    () => isTtsSupported(),
+    () => false
+  );
 
   const card = useMemo(
     () => deck.cards.find((c) => c.id === order[index]) ?? deck.cards[0],
@@ -513,7 +521,7 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           ) : (
             <Volume2 className="size-5" aria-hidden="true" />
           )}
-          {isTtsSupported() ? "Listen" : "Audio not available"}
+          {ttsSupported ? "Listen" : "Audio not available"}
         </button>
         <button
           type="button"
