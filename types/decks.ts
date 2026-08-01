@@ -20,7 +20,8 @@ export type FlashCardImage =
   | { type: "url"; value: string }
   | { type: "numeral"; value: string }
   | { type: "colour"; value: string }
-  | { type: "shape"; value: ShapeName };
+  | { type: "shape"; value: ShapeName }
+  | { type: "icon"; value: string };
 
 export type ShapeName =
   | "circle"

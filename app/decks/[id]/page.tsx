@@ -25,6 +25,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getAllDecks, getDeckById, getRelatedDecks } from "@/lib/decks";
 import { DeckCard } from "@/components/decks/deck-card";
+import { DeckStats } from "@/components/decks/deck-stats";
 import {
   categoryLabel,
   DECK_CATEGORY_META,
@@ -107,16 +108,15 @@ export default async function DeckDetailPage({
             <p className="mt-3 text-pretty text-muted-foreground">
               {deck.description}
             </p>
-            <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <BookOpen className="size-4" aria-hidden="true" />
-                {deck.cards.length} cards
-              </span>
-              {deck.targetAge ? <span>Ages {deck.targetAge}</span> : null}
-            </p>
+            <DeckStats deckId={deck.id} cardCount={deck.cards.length} />
+            {deck.targetAge ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Ages {deck.targetAge}
+              </p>
+            ) : null}
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+          <div className="flex flex-col gap-3">
             <Link
               href={`/decks/${deck.id}/learn`}
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-12 px-8 text-base")}
@@ -129,16 +129,16 @@ export default async function DeckDetailPage({
               className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base bg-emerald-600 hover:bg-emerald-700 text-white")}
             >
               <Play className="size-5" aria-hidden="true" />
-              Test (3 Levels)
+              Take Test
             </Link>
             <Link
               href={`/decks/${deck.id}/epaper`}
               className={cn(
-                buttonVariants({ variant: "ghost", size: "sm" }),
-                "min-h-10 px-4 text-sm text-muted-foreground"
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "min-h-12 px-8 text-base"
               )}
             >
-              <Monitor className="size-4" aria-hidden="true" />
+              <Monitor className="size-5" aria-hidden="true" />
               E-Paper Mode
             </Link>
           </div>

@@ -1,4 +1,4 @@
-import { Accessibility, AudioLines, Volume2 } from "lucide-react";
+import { AudioLines, PersonStanding, Volume2 } from "lucide-react";
 
 export function HeroIllustration() {
   return (
@@ -57,7 +57,7 @@ export function HeroIllustration() {
 
       <div className="absolute -right-3 bottom-8 flex items-center gap-2 rounded-2xl border bg-card/90 px-3 py-2 shadow-lg backdrop-blur sm:-right-8">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Accessibility className="size-4" />
+          <PersonStanding className="size-4" />
         </span>
         <span className="flex flex-col">
           <span className="text-xs font-medium">Accessible</span>

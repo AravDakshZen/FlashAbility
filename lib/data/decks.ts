@@ -271,7 +271,7 @@ export const decks: Deck[] = [
     targetAge: "2–6 years",
     hint: "Course: Animals · Lesson 1. Make the animal sound together after naming it.",
     cards: cards([
-      ["dog", "Dog", "A dog barks. Woof woof!", { type: "url", value: "/images/animals/dog.jpg" }],
+      ["dog", "Dog", "A dog barks. Bow bow!", { type: "url", value: "/images/animals/dog.jpg" }],
       ["cat", "Cat", "A cat meows. Meow!", { type: "url", value: "/images/animals/cat.jpg" }],
       ["cow", "Cow", "A cow moos and gives us milk!", { type: "url", value: "/images/animals/cow.jpg" }],
       ["horse", "Horse", "A horse can run fast!", { type: "url", value: "/images/animals/horse.jpg" }],
@@ -303,10 +303,10 @@ export const decks: Deck[] = [
     targetAge: "1–5 years",
     hint: "Course: Animals · Lesson 2. Pause and let the learner make the sound first.",
     cards: cards([
-      ["cow-sound", "Cow", "A cow moos. Moo! 🐮", { type: "url", value: "/images/animals/cow.jpg" }],
-      ["cat-sound", "Cat", "A cat meows. Meow! 🐱", { type: "url", value: "/images/animals/cat.jpg" }],
-      ["dog-sound", "Dog", "A dog barks. Woof woof! 🐶", { type: "url", value: "/images/animals/dog.jpg" }],
-      ["sheep-sound", "Sheep", "A sheep says baa baa! 🐑", "🐑"],
+      ["cow-sound", "Cow", "A cow moos. Moooww! 🐮", { type: "url", value: "/images/animals/cow.jpg" }],
+      ["cat-sound", "Cat", "A cat meows. Meow meow! 🐱", { type: "url", value: "/images/animals/cat.jpg" }],
+      ["dog-sound", "Dog", "A dog barks. Bow bow! 🐶", { type: "url", value: "/images/animals/dog.jpg" }],
+      ["sheep-sound", "Sheep", "A sheep says baah bhaa! 🐑", "🐑"],
       ["pig-sound", "Pig", "A pig oinks. Oink oink! 🐷", "🐷"],
       ["duck-sound", "Duck", "A duck quacks. Quack quack! 🦆", { type: "url", value: "/images/animals/duck.jpg" }],
       ["chicken-sound", "Chicken", "A chicken clucks. Cluck cluck! 🐔", "🐔"],
