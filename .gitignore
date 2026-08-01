@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent session state
+.omo/run-continuation/
+
+# browser automation artifacts
+.playwright-mcp/
+home-check.png

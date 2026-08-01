@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   BookOpen,
+  Play,
   TrendingUp,
   Trophy,
   Award,
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Courses", href: "/courses", icon: BookOpen },
+  { label: "Learn", href: "/learn", icon: Play },
   { label: "My Progress", href: "/dashboard#progress", icon: TrendingUp },
   { label: "Leaderboard", href: "/dashboard#leaderboard", icon: Trophy },
   { label: "Achievements", href: "/dashboard#achievements", icon: Award },

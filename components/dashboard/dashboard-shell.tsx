@@ -6,7 +6,6 @@ import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { AiAssistant } from "@/components/dashboard/ai-assistant";
 import { AccessibilityPanel } from "@/components/dashboard/accessibility-panel";
-import { AccessibilityProvider } from "@/providers/accessibility-provider";
 import type { SessionUser } from "@/types/auth";
 
 /**
@@ -24,22 +23,20 @@ export function DashboardShell({
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
 
   return (
-    <AccessibilityProvider>
-      <SidebarProvider defaultOpen>
-        <AppSidebar
-          onOpenAI={() => setAiOpen(true)}
-          onOpenAccessibility={() => setAccessibilityOpen(true)}
-        />
-        <SidebarInset>
-          <DashboardHeader user={user} />
-          {children}
-        </SidebarInset>
-        <AiAssistant open={aiOpen} onOpenChange={setAiOpen} />
-        <AccessibilityPanel
-          open={accessibilityOpen}
-          onOpenChange={setAccessibilityOpen}
-        />
-      </SidebarProvider>
-    </AccessibilityProvider>
+    <SidebarProvider defaultOpen>
+      <AppSidebar
+        onOpenAI={() => setAiOpen(true)}
+        onOpenAccessibility={() => setAccessibilityOpen(true)}
+      />
+      <SidebarInset>
+        <DashboardHeader user={user} />
+        {children}
+      </SidebarInset>
+      <AiAssistant open={aiOpen} onOpenChange={setAiOpen} />
+      <AccessibilityPanel
+        open={accessibilityOpen}
+        onOpenChange={setAccessibilityOpen}
+      />
+    </SidebarProvider>
   );
 }

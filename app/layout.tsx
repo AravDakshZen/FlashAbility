@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import { Atkinson_Hyperlegible, Geist_Mono, Inter } from "next/font/google";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { AccessibilityProvider } from "@/providers/accessibility-provider";
 import { Toaster } from "@/components/ui/toast";
 import { siteConfig } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,14 @@ const inter = Inter({
 
 const geistMono = Geist_Mono({
   variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Atkinson Hyperlegible (Braille Institute): low-vision/dyslexia mode face.
+const atkinsonHyperlegible = Atkinson_Hyperlegible({
+  variable: "--font-dyslexia",
+  weight: ["400", "700"],
   subsets: ["latin"],
   display: "swap",
 });
@@ -68,8 +77,21 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={cn("h-full antialiased", inter.variable, geistMono.variable)}
+      className={cn(
+        "h-full antialiased",
+        inter.variable,
+        geistMono.variable,
+        atkinsonHyperlegible.variable
+      )}
     >
+      <head>
+        <script
+          id="accessibility-no-flash"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k="flashability:accessibility";var r=JSON.parse(localStorage.getItem(k)||"null")||{};var d=document.documentElement;if(r.textSize){d.setAttribute("data-text-size",r.textSize)}if(r.highContrast){d.classList.add("high-contrast")}if(r.dyslexiaMode){d.classList.add("dyslexia")}if(r.reduceMotion){d.classList.add("force-reduce-motion")}}catch(e){}})();`,
+          }}
+        />
+      </head>
       {/* suppressHydrationWarning: browser extensions (e.g. bis_register) inject
           attributes into <body> before hydration, which would otherwise warn. */}
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
@@ -80,10 +102,12 @@ export default function RootLayout({
           Skip to content
         </a>
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
+          <AccessibilityProvider>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </AccessibilityProvider>
         </ThemeProvider>
       </body>
     </html>

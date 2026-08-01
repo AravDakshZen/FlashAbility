@@ -39,8 +39,8 @@ function StatCard({
   helper: string;
   delta?: number;
 }) {
-  const { preferences } = useAccessibility();
-  const reduced = preferences.reducedMotion;
+  const { settings } = useAccessibility();
+  const reduced = settings.reduceMotion;
   const positive = (delta ?? 0) >= 0;
 
   return (
@@ -82,8 +82,8 @@ function StatCard({
 
 /** Responsive statistics grid with staggered entrance animation. */
 export function StatsGrid() {
-  const { preferences } = useAccessibility();
-  const reduced = preferences.reducedMotion;
+  const { settings } = useAccessibility();
+  const reduced = settings.reduceMotion;
 
   const stats = [
     {

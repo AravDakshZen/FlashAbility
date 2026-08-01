@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
+  Play,
   TrendingUp,
   Trophy,
   Award,
@@ -25,6 +26,7 @@ import { courses } from "@/lib/data/dashboard";
 const NAV_COMMANDS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Courses", href: "/courses", icon: BookOpen },
+  { label: "Learn", href: "/learn", icon: Play },
   { label: "My Progress", href: "/dashboard#progress", icon: TrendingUp },
   { label: "Leaderboard", href: "/dashboard#leaderboard", icon: Trophy },
   { label: "Achievements", href: "/dashboard#achievements", icon: Award },
