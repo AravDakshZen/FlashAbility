@@ -7,6 +7,7 @@ import { ChevronDown, GraduationCap, Layers, LifeBuoy, ScrollText } from "lucide
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -99,7 +100,9 @@ export function NavLinks({ className }: { className?: string }) {
           }
         />
         <DropdownMenuContent align="end" className="w-60 p-1.5">
-          <DropdownMenuLabel>Resources</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Resources</DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           {RESOURCES.map((resource) => (
             <DropdownMenuItem

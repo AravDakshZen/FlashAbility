@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -121,10 +122,13 @@ export function AccessibilityMenu({
           }
         />
         <DropdownMenuContent align="end" className="w-72 p-1.5">
-          <DropdownMenuLabel>Accessibility</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Accessibility</DropdownMenuLabel>
+          </DropdownMenuGroup>
 
-          <DropdownMenuLabel className="pt-3">Text Size</DropdownMenuLabel>
-          <div className="grid grid-cols-3 gap-1">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="pt-3">Text Size</DropdownMenuLabel>
+            <div className="grid grid-cols-3 gap-1">
             <DropdownMenuItem
               onClick={() =>
                 canDecrease
@@ -166,6 +170,7 @@ export function AccessibilityMenu({
               Reset
             </DropdownMenuItem>
           </div>
+          </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
 
@@ -228,8 +233,9 @@ export function AccessibilityMenu({
             ) : null}
           </DropdownMenuItem>
 
-          <DropdownMenuLabel className="pt-3">Speech Rate</DropdownMenuLabel>
-          {SPEECH_RATES.map((rate) => (
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="pt-3">Speech Rate</DropdownMenuLabel>
+            {SPEECH_RATES.map((rate) => (
             <DropdownMenuItem
               key={rate}
               onClick={() => {
@@ -248,6 +254,7 @@ export function AccessibilityMenu({
               ) : null}
             </DropdownMenuItem>
           ))}
+          </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
 
