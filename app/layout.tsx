@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-// Atkinson Hyperlegible (Braille Institute): low-vision/dyslexia mode face.
+// OpenDyslexic font definition using webfont import and fallback
 const atkinsonHyperlegible = Atkinson_Hyperlegible({
   variable: "--font-dyslexia",
   weight: ["400", "700"],

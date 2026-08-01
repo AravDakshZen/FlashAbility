@@ -195,15 +195,33 @@ html[data-text-size="xl"] {
   font-size: 130%;
 }
 
-/* Dyslexia-friendly mode: Atkinson Hyperlegible + open spacing. */
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic-regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic-bold.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Dyslexia-friendly mode: OpenDyslexic font + open spacing. */
 html.dyslexia {
-  --font-sans: var(--font-dyslexia);
+  --font-sans: "OpenDyslexic", var(--font-dyslexia), sans-serif;
+  --font-heading: "OpenDyslexic", var(--font-dyslexia), sans-serif;
 }
 
 html.dyslexia body {
-  letter-spacing: 0.02em;
-  word-spacing: 0.08em;
-  line-height: 1.7;
+  font-family: "OpenDyslexic", var(--font-dyslexia), sans-serif !important;
+  letter-spacing: 0.03em;
+  word-spacing: 0.1em;
+  line-height: 1.75;
 }
 
 html.dyslexia h1,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { PracticePlayer } from "@/components/decks/practice-player";
+import { TestPlayer } from "@/components/decks/test-player";
 import { getDeckById } from "@/lib/decks";
 
 export async function generateMetadata({
@@ -11,10 +11,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const deck = getDeckById(id);
-  return { title: deck ? `${deck.title} · Practice` : "Deck not found" };
+  return { title: deck ? `${deck.title} · Test` : "Deck not found" };
 }
 
-export default async function PracticePage({
+export default async function TestPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -23,6 +23,5 @@ export default async function PracticePage({
   const deck = getDeckById(id);
   if (!deck) notFound();
 
-  return <PracticePlayer deck={deck} />;
+  return <TestPlayer deck={deck} />;
 }
-

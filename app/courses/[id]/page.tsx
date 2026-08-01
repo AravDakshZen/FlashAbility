@@ -125,25 +125,32 @@ export default async function CourseDetailPage({
                     </div>
                     <div className="flex flex-col items-start gap-2 pl-14 sm:items-end sm:pl-0">
                       <LessonProgress deckId={deck.id} />
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/decks/${deck.id}/practice`}
-                          className={cn(buttonVariants({ size: "sm" }), "min-h-11")}
-                        >
-                          <Play className="size-4" aria-hidden="true" />
-                          Practice
-                        </Link>
-                        <Link
-                          href={`/decks/${deck.id}/epaper`}
-                          className={cn(
-                            buttonVariants({ variant: "outline", size: "sm" }),
-                            "min-h-11"
-                          )}
-                          aria-label={`Open ${deck.title} in e-paper mode`}
-                        >
-                          <Monitor className="size-4" aria-hidden="true" />
-                        </Link>
-                      </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={`/decks/${deck.id}/learn`}
+                            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-11 border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200")}
+                          >
+                            <BookOpen className="size-4" aria-hidden="true" />
+                            Learning Mode
+                          </Link>
+                          <Link
+                            href={`/decks/${deck.id}/practice`}
+                            className={cn(buttonVariants({ size: "sm" }), "min-h-11 bg-emerald-600 hover:bg-emerald-700 text-white")}
+                          >
+                            <Play className="size-4" aria-hidden="true" />
+                            Practice (3 Levels)
+                          </Link>
+                          <Link
+                            href={`/decks/${deck.id}/epaper`}
+                            className={cn(
+                              buttonVariants({ variant: "ghost", size: "sm" }),
+                              "min-h-11"
+                            )}
+                            aria-label={`Open ${deck.title} in e-paper mode`}
+                          >
+                            <Monitor className="size-4" aria-hidden="true" />
+                          </Link>
+                        </div>
                     </div>
                   </CardHeader>
                 </Card>

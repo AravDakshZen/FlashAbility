@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BookOpen, Info, Monitor, Play } from "lucide-react";
+import { ArrowLeft, BookOpen, Info, Monitor, Play, Repeat } from "lucide-react";
 import type { Metadata } from "next";
 import {
   AudioLines,
@@ -112,20 +112,34 @@ export default async function DeckDetailPage({
 
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
             <Link
+              href={`/decks/${deck.id}/learn`}
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-12 px-8 text-base")}
+            >
+              <BookOpen className="size-5" aria-hidden="true" />
+              Learning Mode
+            </Link>
+            <Link
               href={`/decks/${deck.id}/practice`}
-              className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base")}
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-12 px-8 text-base")}
+            >
+              <Repeat className="size-5" aria-hidden="true" />
+              Practice (3 Levels)
+            </Link>
+            <Link
+              href={`/decks/${deck.id}/test`}
+              className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base bg-emerald-600 hover:bg-emerald-700 text-white")}
             >
               <Play className="size-5" aria-hidden="true" />
-              Start Practice
+              Pictorial MCQ Test
             </Link>
             <Link
               href={`/decks/${deck.id}/epaper`}
               className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "min-h-12 px-8 text-base"
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "min-h-10 px-4 text-sm text-muted-foreground"
               )}
             >
-              <Monitor className="size-5" aria-hidden="true" />
+              <Monitor className="size-4" aria-hidden="true" />
               E-Paper Mode
             </Link>
           </div>

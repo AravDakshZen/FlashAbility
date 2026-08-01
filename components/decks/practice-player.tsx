@@ -26,6 +26,7 @@ import type { Deck } from "@/types/decks";
 
 type Phase = "practice" | "summary";
 type Result = "correct" | "miss";
+type PracticeLevel = 1 | 2 | 3;
 
 const POINTS_CORRECT = 10;
 const POINTS_STREAK_BONUS = 5;
@@ -46,6 +47,7 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
   const reduceMotion = useReducedMotionSafe();
 
   const [phase, setPhase] = useState<Phase>("practice");
+  const [practiceLevel, setPracticeLevel] = useState<PracticeLevel>(2);
   const [order, setOrder] = useState(() => deck.cards.map((c) => c.id));
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -84,24 +86,27 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
   const total = deck.cards.length;
   const isRewardDeck = deck.category === "reinforcement";
 
+  const textToSpeak = flipped ? (card.back ?? `This is a ${card.front}`) : card.front;
+
   const speakWord = useCallback(() => {
     if (!isTtsSupported()) return;
     setSpeaking(true);
-    speak(card.front, {
+    speak(textToSpeak, {
       onStart: () => setSpeaking(true),
       onEnd: () => setSpeaking(false),
     });
-  }, [card.front]);
+  }, [textToSpeak]);
 
   // Speak each card as it appears — state changes only from async speech events.
   useEffect(() => {
     if (phase !== "practice") return;
-    speak(card.front, {
+    if (practiceLevel === 3 && !flipped) return;
+    speak(textToSpeak, {
       onStart: () => setSpeaking(true),
       onEnd: () => setSpeaking(false),
     });
     return () => stopSpeaking();
-  }, [index, phase, card.front]);
+  }, [index, phase, textToSpeak, practiceLevel, flipped]);
 
   useEffect(() => {
     const lv = levelFromPoints(points).level;
@@ -185,6 +190,20 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
     setPhase("practice");
   }, [deck.cards]);
 
+  const changeLevel = useCallback((level: PracticeLevel) => {
+    setPracticeLevel(level);
+    summarySaved.current = false;
+    setOrder(shuffle(deck.cards.map((c) => c.id)));
+    setIndex(0);
+    setResults({});
+    setStreak(0);
+    setPoints(0);
+    setSessionStars(0);
+    setNewBadges([]);
+    setFlipped(false);
+    setPhase("practice");
+  }, [deck.cards]);
+
   const goNext = useCallback(() => {
     if (phase !== "practice") return;
 
@@ -246,6 +265,8 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           break;
         case "f":
         case "F":
+        case "r":
+        case "R":
           setFlipped((f) => !f);
           break;
         case "ArrowRight":
@@ -302,6 +323,34 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         </p>
       </div>
 
+      {/* 3 Difficulty Level Selector */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-1 rounded-full border border-border/80 bg-muted/50 p-1 sm:justify-start">
+        <button
+          type="button"
+          onClick={() => changeLevel(1)}
+          aria-pressed={practiceLevel === 1}
+          className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${practiceLevel === 1 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Easy · Hint shown
+        </button>
+        <button
+          type="button"
+          onClick={() => changeLevel(2)}
+          aria-pressed={practiceLevel === 2}
+          className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${practiceLevel === 2 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Medium · Reveal to check
+        </button>
+        <button
+          type="button"
+          onClick={() => changeLevel(3)}
+          aria-pressed={practiceLevel === 3}
+          className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${practiceLevel === 3 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Hard · Picture only
+        </button>
+      </div>
+
       <div
         className="mt-4 h-3 w-full overflow-hidden rounded-full bg-muted"
         role="progressbar"
@@ -340,8 +389,11 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           card={card}
           accent={deck.accent}
           flipped={flipped}
+          practiceLevel={practiceLevel}
           reduceMotion={reduceMotion}
           onFlip={() => setFlipped((f) => !f)}
+          onSwipeLeft={goNext}
+          onSwipeRight={goPrev}
         />
 
         <div className="mt-5 flex w-full max-w-md items-center justify-between gap-3">
@@ -408,7 +460,7 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           className="inline-flex min-h-12 items-center gap-2 rounded-full border bg-background px-6 text-base font-medium hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
         >
           <RotateCcw className="size-5" aria-hidden="true" />
-          Flip
+          Reveal
         </button>
 
         {/* Single Try Again — marks the card as not-yet-mastered and re-speaks */}
@@ -423,7 +475,7 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
       </div>
 
       <p className="mt-4 text-center text-xs text-muted-foreground" aria-hidden="true">
-        Keys: Space listen · F flip · ← → cards · T try again
+        Keys: Space listen · R reveal · ← → cards · T try again
       </p>
 
       <AnimatePresence>
