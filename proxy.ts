@@ -1,8 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+﻿import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes that require an authenticated session.
-const PROTECTED_ROUTES = ["/dashboard", "/courses"];
+const PROTECTED_ROUTES = ["/dashboard"];
 
 // Routes that authenticated users should be redirected away from.
 // `/reset-password` is intentionally absent — the recovery email link

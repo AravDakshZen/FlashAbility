@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { TriangleAlert } from "lucide-react";
+import { FlaskConical, TriangleAlert } from "lucide-react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { PasswordInput } from "@/components/auth/password-input";
@@ -13,6 +13,7 @@ import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/fie
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/demo";
 import { login } from "@/services/auth-service";
 import type { AuthState } from "@/types/auth";
 
@@ -21,6 +22,13 @@ export function LoginForm({ next }: { next: string }) {
     login,
     {}
   );
+
+  function fillDemoCredentials() {
+    const emailInput = document.getElementById("email") as HTMLInputElement | null;
+    const passwordInput = document.getElementById("password") as HTMLInputElement | null;
+    if (emailInput) emailInput.value = DEMO_EMAIL;
+    if (passwordInput) passwordInput.value = DEMO_PASSWORD;
+  }
 
   return (
     <AuthCard
@@ -67,8 +75,12 @@ export function LoginForm({ next }: { next: string }) {
               autoComplete="email"
               placeholder="you@example.com"
               aria-invalid={Boolean(state.errors?.email)}
+              aria-describedby={state.errors?.email ? "email-error" : undefined}
             />
-            <FieldError errors={[{ message: state.errors?.email }]} />
+            <FieldError
+              id="email-error"
+              errors={[{ message: state.errors?.email }]}
+            />
           </FieldContent>
         </Field>
 
@@ -88,8 +100,12 @@ export function LoginForm({ next }: { next: string }) {
               name="password"
               autoComplete="current-password"
               aria-invalid={Boolean(state.errors?.password)}
+              aria-describedby={state.errors?.password ? "password-error" : undefined}
             />
-            <FieldError errors={[{ message: state.errors?.password }]} />
+            <FieldError
+              id="password-error"
+              errors={[{ message: state.errors?.password }]}
+            />
           </FieldContent>
         </Field>
 
@@ -98,6 +114,18 @@ export function LoginForm({ next }: { next: string }) {
           Sign in
         </Button>
       </form>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full"
+        onClick={fillDemoCredentials}
+        aria-label={`Fill in demo account ${DEMO_EMAIL}, then press Sign in`}
+      >
+        <FlaskConical className="size-4" aria-hidden="true" />
+        Use demo account (recc@gmail.com)
+      </Button>
     </AuthCard>
   );
 }

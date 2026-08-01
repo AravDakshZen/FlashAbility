@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+
+import { useReducedMotionSafe } from "@/lib/hooks/use-reduced-motion";
 
 type RevealProps = {
   children: ReactNode;
@@ -11,7 +13,7 @@ type RevealProps = {
 
 /** Subtle fade-up on scroll. Renders a plain div when reduced motion is preferred. */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
 
   if (reduce) {
     return <div className={className}>{children}</div>;

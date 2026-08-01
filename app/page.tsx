@@ -9,10 +9,8 @@ import {
   ExternalLink,
   Globe,
   Keyboard,
-  Languages,
   Leaf,
   Layers,
-  Mic,
   MonitorSmartphone,
   Repeat,
   ShieldCheck,
@@ -20,7 +18,6 @@ import {
   Speech,
   Type,
   Volume2,
-  WifiOff,
 } from "lucide-react";
 
 import { SiteFooter } from "@/components/site-footer";
@@ -52,12 +49,6 @@ const features = [
       "Built-in positive reinforcement keeps learners motivated through every session.",
   },
   {
-    icon: Mic,
-    title: "Speech-to-Text",
-    description:
-      "Learners can speak answers and watch them turn into text in real time.",
-  },
-  {
     icon: Volume2,
     title: "Text-to-Speech",
     description:
@@ -68,18 +59,6 @@ const features = [
     title: "Pronunciation Assistance",
     description:
       "Hear correct pronunciation and practice with gentle, instant feedback.",
-  },
-  {
-    icon: WifiOff,
-    title: "Offline Learning",
-    description:
-      "Download decks and keep learning even without an internet connection.",
-  },
-  {
-    icon: Languages,
-    title: "Multilingual Support",
-    description:
-      "Switch between languages to match each learner's comfort and needs.",
   },
   {
     icon: MonitorSmartphone,
@@ -175,7 +154,7 @@ export default function HomePage() {
             <Reveal delay={0.15}>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/learn"
+                  href="/courses"
                   className={cn(buttonVariants({ size: "lg" }), "px-6")}
                 >
                   Start Learning <ArrowRight />
@@ -183,7 +162,7 @@ export default function HomePage() {
                 <Link
                   href="/#features"
                   className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
+                    buttonVariants({ variant: "ghost", size: "lg" }),
                     "px-6"
                   )}
                 >
@@ -363,7 +342,7 @@ export default function HomePage() {
               </p>
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/learn"
+                  href="/courses"
                   className={cn(buttonVariants({ size: "lg" }), "px-6")}
                 >
                   Start Learning Free

@@ -1,8 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { DEMO_COOKIE, isDemoCredentials } from "@/lib/demo";
 import { toAuthErrorMessage, type AuthState } from "@/types/auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,6 +29,17 @@ function validatePassword(password: string): string | undefined {
   return undefined;
 }
 
+/** Sets the demo session cookie shared by demo login and guest access. */
+async function setDemoCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(DEMO_COOKIE, "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+}
+
 /** Login with email + password. On success the session cookie is set and the user is redirected. */
 export async function login(
   _prevState: AuthState,
@@ -41,6 +54,12 @@ export async function login(
   if (emailError) errors.email = emailError;
   if (passwordError) errors.password = passwordError;
   if (Object.keys(errors).length > 0) return { errors };
+
+  // Demo account: local cookie session, no Supabase round-trip.
+  if (isDemoCredentials(email, password)) {
+    await setDemoCookie();
+    redirect("/dashboard");
+  }
 
   const supabase = await createClient();
 
@@ -129,20 +148,20 @@ export async function forgotPassword(
 
 /** Signs the user out and redirects to the landing page. */
 export async function logout(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(DEMO_COOKIE);
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
 }
 
-/** Continues as an anonymous guest (requires "Allow anonymous sign-ins" on the Supabase project). */
+/**
+ * Continues as a guest. Anonymous Supabase sign-ins are disabled on the
+ * project, so this uses the local demo session cookie instead — guests get
+ * the full experience with no account required.
+ */
 export async function continueAsGuest(): Promise<AuthState> {
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    return {
-      errors: { form: "Guest access is not available right now. Please log in." },
-    };
-  }
+  await setDemoCookie();
   return { success: true };
 }
 

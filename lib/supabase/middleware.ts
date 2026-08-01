@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DEMO_COOKIE, DEMO_EMAIL, DEMO_USER_ID } from "@/lib/demo";
 
 /**
  * Refreshes the Supabase auth session for a request and returns the response
@@ -11,9 +12,25 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  // Demo session cookie counts as signed in — no Supabase round-trip.
+  if (request.cookies.get(DEMO_COOKIE)?.value === "1") {
+    return {
+      supabaseResponse,
+      user: { id: DEMO_USER_ID, email: DEMO_EMAIL },
+    };
+  }
+
+  // Without env vars there is no Supabase project — skip auth refresh so
+  // every page still renders (users appear signed out).
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { supabaseResponse, user: null };
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {

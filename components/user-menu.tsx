@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -25,7 +26,12 @@ export function UserMenu({
   user: SessionUser;
   className?: string;
 }) {
-  const initial = user.email?.trim().charAt(0).toUpperCase() ?? "U";
+  const displayName =
+    user.user_metadata?.name ??
+    user.user_metadata?.full_name ??
+    user.email ??
+    "Signed in";
+  const initial = displayName.trim().charAt(0).toUpperCase() || "U";
 
   return (
     <DropdownMenu>
@@ -33,7 +39,7 @@ export function UserMenu({
         render={
           <Button
             variant="ghost"
-            aria-label="Account menu"
+            aria-label={`Account menu for ${displayName}`}
             className={cn("h-9 rounded-full px-1.5", className)}
           >
             <Avatar className="size-8">
@@ -43,14 +49,16 @@ export function UserMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <span className="block truncate font-medium text-foreground">
-            {user.email}
-          </span>
-          <span className="block text-xs font-normal text-muted-foreground">
-            Signed in
-          </span>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            <span className="block truncate font-medium text-foreground">
+              {displayName}
+            </span>
+            <span className="block truncate text-xs font-normal text-muted-foreground">
+              {user.email ?? "Signed in"}
+            </span>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<Link href="/dashboard" />}>
           <LayoutDashboard />
@@ -60,6 +68,7 @@ export function UserMenu({
         <form action={logout}>
           <DropdownMenuItem
             variant="destructive"
+            nativeButton
             render={<button type="submit" className="w-full" />}
           >
             <LogOut />
