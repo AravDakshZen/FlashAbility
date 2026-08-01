@@ -13,8 +13,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { logout } from "@/services/auth-service";
-import type { SessionUser } from "@/types/auth";
 
 type NavItem = { label: string; href: string };
 type NavLink = NavItem | { label: string; children: readonly NavItem[] };
@@ -25,10 +23,8 @@ function isSection(link: NavLink): link is { label: string; children: readonly N
 
 export function MobileNav({
   links,
-  user,
 }: {
   links: readonly NavLink[];
-  user: SessionUser | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -82,47 +78,13 @@ export function MobileNav({
           )}
         </nav>
         <div className="mt-auto flex flex-col gap-2 border-t px-4 py-4">
-          {user ? (
-            <>
-              <p className="truncate px-3 text-sm text-muted-foreground">
-                Signed in as {user.email}
-              </p>
-              <Link
-                href="/dashboard"
-                onClick={() => setOpen(false)}
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                Dashboard
-              </Link>
-              <form action={logout}>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
-                  Sign out
-                </Button>
-              </form>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                Log in
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setOpen(false)}
-                className={buttonVariants({ size: "sm" })}
-              >
-                Sign up
-              </Link>
-            </>
-          )}
+          <Link
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Dashboard
+          </Link>
         </div>
       </SheetContent>
     </Sheet>

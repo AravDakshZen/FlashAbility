@@ -20,7 +20,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCourseById, getCourseDecks, getTotalCardCount } from "@/lib/decks";
+import { getAllCourses, getCourseById, getCourseDecks, getTotalCardCount } from "@/lib/decks";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -28,6 +28,12 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Calculator,
   Speech,
 };
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return getAllCourses().map((course) => ({ id: course.id }));
+}
 
 export async function generateMetadata({
   params,
@@ -134,11 +140,11 @@ export default async function CourseDetailPage({
                             Learning Mode
                           </Link>
                           <Link
-                            href={`/decks/${deck.id}/practice`}
+                            href={`/decks/${deck.id}/test`}
                             className={cn(buttonVariants({ size: "sm" }), "min-h-11 bg-emerald-600 hover:bg-emerald-700 text-white")}
                           >
                             <Play className="size-4" aria-hidden="true" />
-                            Practice (3 Levels)
+                            Test (3 Levels)
                           </Link>
                           <Link
                             href={`/decks/${deck.id}/epaper`}

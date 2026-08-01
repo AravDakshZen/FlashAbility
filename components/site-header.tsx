@@ -3,9 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { MobileNav } from "@/components/mobile-nav";
 import { NavLinks } from "@/components/nav/nav-links";
-import { UserMenu } from "@/components/user-menu";
 import { buttonVariants } from "@/components/ui/button";
-import { getSessionUser } from "@/lib/supabase/dal";
 import { cn } from "@/lib/utils";
 
 const mobileLinks = [
@@ -28,9 +26,7 @@ const mobileLinks = [
 const utilityLinkClasses =
   "inline-flex min-h-9 items-center rounded-md px-2.5 text-xs font-medium text-white/90 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-3 focus-visible:ring-white/50";
 
-export async function SiteHeader() {
-  const user = await getSessionUser();
-
+export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50">
       <div className="bg-black text-white">
@@ -40,25 +36,9 @@ export async function SiteHeader() {
           </p>
           <div className="flex shrink-0 items-center gap-1">
             <span className="mx-1 h-3.5 w-px bg-white/25" aria-hidden="true" />
-            {user ? (
-              <>
-                <Link href="/dashboard" className={utilityLinkClasses}>
-                  Dashboard
-                </Link>
-                <span className="hidden text-xs text-white/40 sm:inline">
-                  {user.email}
-                </span>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className={utilityLinkClasses}>
-                  Log in
-                </Link>
-                <Link href="/signup" className={utilityLinkClasses}>
-                  Sign up
-                </Link>
-              </>
-            )}
+            <Link href="/dashboard" className={utilityLinkClasses}>
+              Dashboard
+            </Link>
           </div>
         </div>
       </div>
@@ -67,31 +47,16 @@ export async function SiteHeader() {
         <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Logo tagline className="shrink-0" />
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            {user ? (
-              <UserMenu user={user} />
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "hidden min-h-11 sm:inline-flex"
-                  )}
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/signup"
-                  className={cn(
-                    buttonVariants({ size: "sm" }),
-                    "hidden min-h-11 sm:inline-flex"
-                  )}
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
-            <MobileNav links={mobileLinks} user={user} />
+            <Link
+              href="/dashboard"
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "hidden min-h-11 sm:inline-flex"
+              )}
+            >
+              Dashboard
+            </Link>
+            <MobileNav links={mobileLinks} />
           </div>
         </div>
       </div>

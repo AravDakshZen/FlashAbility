@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BookOpen, Info, Monitor, Play, Repeat } from "lucide-react";
+import { ArrowLeft, BookOpen, Info, Monitor, Play } from "lucide-react";
 import type { Metadata } from "next";
 import {
   AudioLines,
@@ -23,7 +23,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getDeckById, getRelatedDecks } from "@/lib/decks";
+import { getAllDecks, getDeckById, getRelatedDecks } from "@/lib/decks";
 import { DeckCard } from "@/components/decks/deck-card";
 import {
   categoryLabel,
@@ -46,6 +46,12 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Calculator,
   Speech,
 };
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return getAllDecks().map((deck) => ({ id: deck.id }));
+}
 
 export function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   return params.then(({ id }) => {
@@ -119,18 +125,11 @@ export default async function DeckDetailPage({
               Learning Mode
             </Link>
             <Link
-              href={`/decks/${deck.id}/practice`}
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-12 px-8 text-base")}
-            >
-              <Repeat className="size-5" aria-hidden="true" />
-              Practice (3 Levels)
-            </Link>
-            <Link
               href={`/decks/${deck.id}/test`}
               className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base bg-emerald-600 hover:bg-emerald-700 text-white")}
             >
               <Play className="size-5" aria-hidden="true" />
-              Pictorial MCQ Test
+              Test (3 Levels)
             </Link>
             <Link
               href={`/decks/${deck.id}/epaper`}

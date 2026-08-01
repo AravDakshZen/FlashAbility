@@ -41,7 +41,7 @@ export function StarsSummary() {
       </div>
       {state.sessions.length === 0 ? (
         <p className="sm:col-span-4 text-center text-sm text-muted-foreground">
-          Complete a practice session to start earning stars and badges!
+          Complete a test session to start earning stars and badges!
         </p>
       ) : null}
     </div>

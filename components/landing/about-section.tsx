@@ -15,7 +15,8 @@ export function AboutSection() {
           </Reveal>
           <Reveal delay={0.05}>
             <p className="mt-4 text-pretty text-muted-foreground">
-              {siteConfig.description}
+              {siteConfig.institution.fullName} and {siteConfig.institution.ministry}
+              support this platform to make communication learning more accessible.
             </p>
             <p className="mt-3 text-pretty text-muted-foreground">
               Our mission is simple: make communication learning accessible

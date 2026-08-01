@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { TestPlayer } from "@/components/decks/test-player";
-import { getDeckById } from "@/lib/decks";
+import { getAllDecks, getDeckById } from "@/lib/decks";
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return getAllDecks().map((deck) => ({ id: deck.id }));
+}
 
 export async function generateMetadata({
   params,

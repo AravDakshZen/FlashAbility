@@ -24,8 +24,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAllCourses, getAllDecks, getCourseDecks } from "@/lib/decks";
-import { requireUser } from "@/lib/supabase/dal";
-import { logout } from "@/services/auth-service";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -35,7 +33,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default async function DashboardPage() {
-  const user = await requireUser();
   const courses = getAllCourses();
   const decks = getAllDecks();
 
@@ -46,26 +43,20 @@ export default async function DashboardPage() {
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <Badge variant="secondary" className="w-fit">
-              Signed in
+              My progress
             </Badge>
             <h1 className="font-heading mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Welcome back{user.user_metadata?.name ? `, ${user.user_metadata.name}` : ""}
+              My Learning Dashboard
             </h1>
-            <p className="mt-2 text-muted-foreground">{user.email}</p>
+            <p className="mt-2 text-muted-foreground">
+              Track your flashcards, points, and stars — saved on this device.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/courses" className={cn(buttonVariants(), "min-h-11 gap-2")}>
               <Play className="size-4" aria-hidden="true" />
               Start Learning
             </Link>
-            <form action={logout}>
-              <button
-                type="submit"
-                className={cn(buttonVariants({ variant: "outline" }), "min-h-11")}
-              >
-                Sign out
-              </button>
-            </form>
           </div>
         </header>
 
@@ -128,8 +119,8 @@ export default async function DashboardPage() {
             Deck Library
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every card deck, filterable by category. Tap a deck to practice or
-            open e-paper mode.
+            Every card deck, filterable by category. Tap a deck to learn, test,
+            or open e-paper mode.
           </p>
           <div className="mt-4">
             <DeckGrid decks={decks} />

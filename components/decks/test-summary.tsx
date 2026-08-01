@@ -19,7 +19,7 @@ import type { LevelInfo } from "@/lib/rewards";
 import type { Deck } from "@/types/decks";
 import { cn } from "@/lib/utils";
 
-type PracticeSummaryProps = {
+type TestSummaryProps = {
   deck: Deck;
   correctCount: number;
   total: number;
@@ -31,7 +31,7 @@ type PracticeSummaryProps = {
   onRestart: () => void;
 };
 
-export function PracticeSummary({
+export function TestSummary({
   deck,
   correctCount,
   total,
@@ -41,7 +41,7 @@ export function PracticeSummary({
   newBadges,
   reduceMotion,
   onRestart,
-}: PracticeSummaryProps) {
+}: TestSummaryProps) {
   const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
 
   return (
@@ -120,7 +120,7 @@ export function PracticeSummary({
             className={cn(buttonVariants({ size: "lg" }), "min-h-12 w-full px-8 text-base sm:w-auto")}
           >
             <RotateCcw className="size-5" aria-hidden="true" />
-            Practice Again
+            Test Again
           </button>
           <Link
             href={`/decks/${deck.id}`}

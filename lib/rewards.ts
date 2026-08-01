@@ -135,10 +135,10 @@ export function levelFromPoints(points: number): LevelInfo {
 }
 
 const BADGE_DEFS = [
-  { id: "first-practice", label: "First Practice", description: "Completed your first practice session" },
+  { id: "first-test", label: "First Test", description: "Completed your first test session" },
   { id: "star-10", label: "10 Stars", description: "Earned 10 stars in total" },
   { id: "star-50", label: "50 Stars", description: "Earned 50 stars in total" },
-  { id: "decks-3", label: "Explorer", description: "Practiced 3 different decks" },
+  { id: "decks-3", label: "Explorer", description: "Tested 3 different decks" },
   { id: "accuracy-90", label: "Sharpshooter", description: "Got 90%+ correct across sessions (min 10 answers)" },
   { id: "streak-5", label: "On Fire", description: "Reached a 5-streak of correct answers" },
 ] as const;
@@ -161,7 +161,7 @@ export function recordSession(
   const uniqueDecks = new Set(state.sessions.map((s) => s.deckId)).size;
 
   const earned: Record<BadgeId, boolean> = {
-    "first-practice": state.sessions.length >= 1,
+    "first-test": state.sessions.length >= 1,
     "star-10": state.stars >= 10,
     "star-50": state.stars >= 50,
     "decks-3": uniqueDecks >= 3,

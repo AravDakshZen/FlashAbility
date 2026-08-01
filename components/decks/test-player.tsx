@@ -7,7 +7,7 @@ import { ArrowRight, CheckCircle2, Flame, Star, Trophy, Volume2, XCircle, Zap, X
 
 import { CardVisual } from "@/components/decks/card-visual";
 import { CelebrationOverlay, type Celebration } from "@/components/decks/celebration-overlay";
-import { PracticeSummary } from "@/components/decks/practice-summary";
+import { TestSummary } from "@/components/decks/test-summary";
 import { levelFromPoints, recordSession } from "@/lib/rewards";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/tts";
 import { useReducedMotionSafe } from "@/lib/hooks/use-reduced-motion";
@@ -22,10 +22,30 @@ const POINTS_COMPLETION = 30;
 const POINTS_PERFECT = 60;
 const STAR_EVERY = 3;
 
-function shuffle<T>(array: T[]): T[] {
+function hashCode(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return h;
+}
+
+function mulberry32(seed: number): () => number {
+  let a = seed | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Deterministic per seed so server and client render identical questions
+// (avoids hydration mismatches with Math.random()).
+function seededShuffle<T>(array: T[], rng: () => number): T[] {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
@@ -61,86 +81,38 @@ export function TestPlayer({ deck }: { deck: Deck }) {
   const floatId = useRef(0);
   const celebrationIdRef = useRef(0);
 
-  // Generate 10-question tests per level with specific question types
   const questions: Question[] = useMemo(() => {
     const allPoolCards = decks.flatMap((d) => d.cards);
     const distractorCount = testLevel === 1 ? 1 : 3;
-
-    // Take up to 10 cards per test session
     const targetCards = deck.cards.slice(0, 10);
 
-    return targetCards.map((targetCard) => {
-      const distractorPool = allPoolCards.filter(
+    return targetCards.map((targetCard, qi) => {
+      const rng = mulberry32(hashCode(`${deck.id}:${testLevel}:${qi}`));
+      const sameDeckPool = deck.cards.filter(
         (c) => c.id !== targetCard.id && c.front !== targetCard.front
       );
-      const shuffledDistractors = shuffle(distractorPool).slice(0, distractorCount);
-      const options = shuffle([targetCard, ...shuffledDistractors]);
+      const allPool = allPoolCards.filter(
+        (c) => c.id !== targetCard.id && c.front !== targetCard.front
+      );
 
-      let promptText = `Which picture shows the ${targetCard.front}?`;
-
-      if (testLevel === 1) {
-        promptText = `Which one is the ${targetCard.front}?`;
-      } else if (testLevel === 2) {
-        if (targetCard.front.toLowerCase().includes("dog")) {
-          promptText = `Which animal barks and says "Woof woof!"?`;
-        } else if (targetCard.front.toLowerCase().includes("cat")) {
-          promptText = `Which animal meows and says "Meow"?`;
-        } else if (targetCard.front.toLowerCase().includes("cow")) {
-          promptText = `Which animal moos and gives us milk?`;
-        } else if (targetCard.front.toLowerCase().includes("horse")) {
-          promptText = `Which animal runs fast and says "Neigh"?`;
-        } else if (targetCard.front.toLowerCase().includes("sheep")) {
-          promptText = `Which animal says "Baa baa" and is fluffy?`;
-        } else if (targetCard.front.toLowerCase().includes("pig")) {
-          promptText = `Which animal says "Oink oink" and rolls in mud?`;
-        } else if (targetCard.front.toLowerCase().includes("duck")) {
-          promptText = `Which bird says "Quack quack" and swims?`;
-        } else if (targetCard.front.toLowerCase().includes("chicken")) {
-          promptText = `Which bird says "Cluck cluck" and gives eggs?`;
-        } else if (targetCard.front.toLowerCase().includes("lion")) {
-          promptText = `Which big cat says "Roar" and is called the king?`;
-        } else if (targetCard.front.toLowerCase().includes("elephant")) {
-          promptText = `Which big animal has a long trunk?`;
-        } else if (targetCard.front.toLowerCase().includes("monkey")) {
-          promptText = `Which animal loves to swing and eat bananas?`;
-        } else if (targetCard.front.toLowerCase().includes("frog")) {
-          promptText = `Which green animal can jump high and says "Ribbit"?`;
-        } else if (targetCard.front.toLowerCase().includes("bird")) {
-          promptText = `Which animal can fly and sing?`;
-        } else if (targetCard.front.toLowerCase().includes("fish")) {
-          promptText = `Which animal swims in water?`;
-        } else if (targetCard.front.toLowerCase().includes("turtle")) {
-          promptText = `Which animal is slow and carries a shell?`;
-        } else if (targetCard.front.toLowerCase().includes("rabbit")) {
-          promptText = `Which animal hops and has long ears?`;
-        } else if (targetCard.front.toLowerCase().includes("apple")) {
-          promptText = `Which juicy red fruit grows on a tree?`;
-        } else if (targetCard.front.toLowerCase().includes("car")) {
-          promptText = `Which vehicle has 4 wheels and drives on the road?`;
-        } else if (targetCard.front.toLowerCase().includes("ball")) {
-          promptText = `Which round toy can you throw and bounce?`;
-        } else {
-          promptText = `Which picture shows the ${targetCard.front}?`;
-        }
-      } else if (testLevel === 3) {
-        if (targetCard.front.toLowerCase().includes("cat")) {
-          promptText = `Listen: find the picture of the cat that meows.`;
-        } else if (targetCard.front.toLowerCase().includes("dog")) {
-          promptText = `Listen: find the picture of the dog that barks.`;
-        } else if (targetCard.front.toLowerCase().includes("cow")) {
-          promptText = `Listen: find the picture of the cow that moos.`;
-        } else {
-          promptText = `Listen carefully: which picture shows the ${targetCard.front}?`;
-        }
+      let distractorCards: FlashCard[];
+      if (testLevel === 3) {
+        const sameDeck = seededShuffle(sameDeckPool, rng);
+        const needed = distractorCount - sameDeck.length;
+        const others = seededShuffle(allPool, rng)
+          .filter((c) => !sameDeck.includes(c))
+          .slice(0, Math.max(0, needed));
+        distractorCards = [...sameDeck, ...others].slice(0, distractorCount);
+      } else {
+        distractorCards = seededShuffle(allPool, rng).slice(0, distractorCount);
       }
 
-      return {
-        card: targetCard,
-        promptText,
-        options,
-      };
+      const options = seededShuffle([targetCard, ...distractorCards], rng);
+      const promptText = `Which one is the ${targetCard.front}?`;
+
+      return { card: targetCard, promptText, options };
     });
-  }, [deck.cards, testLevel]);
+  }, [deck.cards, deck.id, testLevel]);
 
   const currentQ = questions[questionIndex] ?? questions[0];
   const total = questions.length;
@@ -251,7 +223,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
 
   if (phase === "summary") {
     return (
-      <PracticeSummary
+      <TestSummary
         deck={deck}
         correctCount={correctCount}
         total={total}
@@ -287,21 +259,21 @@ export function TestPlayer({ deck }: { deck: Deck }) {
             onClick={() => { setTestLevel(1); setQuestionIndex(0); setIsAnswered(false); }}
             className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${testLevel === 1 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
           >
-            Simple (Identification)
+            Easy · 2 Choices
           </button>
           <button
             type="button"
             onClick={() => { setTestLevel(2); setQuestionIndex(0); setIsAnswered(false); }}
             className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${testLevel === 2 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
           >
-            Medium (Action/Behavior)
+            Medium · 4 Choices
           </button>
           <button
             type="button"
             onClick={() => { setTestLevel(3); setQuestionIndex(0); setIsAnswered(false); }}
             className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${testLevel === 3 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
           >
-            Complex (Scenario)
+            Hard · Similar Pictures
           </button>
         </div>
 
@@ -409,12 +381,12 @@ export function TestPlayer({ deck }: { deck: Deck }) {
               type="button"
               disabled={isAnswered}
               onClick={() => handleSelectOption(option)}
+              aria-label={`Option: ${option.front}`}
               className={`relative flex aspect-[4/3] flex-col items-center justify-center rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
             >
               <div className="flex size-full items-center justify-center drop-shadow-sm">
                 <CardVisual image={option.image} />
               </div>
-              <span className="mt-3 font-heading text-lg font-bold tracking-tight">{option.front}</span>
 
               {isAnswered && isCorrect ? (
                 <CheckCircle2 className="absolute right-3.5 top-3.5 size-8 text-green-500 drop-shadow-md animate-bounce" />

@@ -1,4 +1,5 @@
 import type { Course, Deck, FlashCard, FlashCardImage } from "@/types/decks";
+import { IMAGE_URIS } from "@/lib/data/images";
 
 /**
  * Seed content for e-Flash Cards.
@@ -6,6 +7,10 @@ import type { Course, Deck, FlashCard, FlashCardImage } from "@/types/decks";
  * Every deck is clinically sensible, kid-friendly, and designed so the front
  * word/phrase can be spoken by TTS and understood visually (emoji + text) —
  * critical for learners with speech and hearing disabilities.
+ *
+ * Photo cards (animals/objects) reference `/images/...` paths in the specs;
+ * `resolveImage` swaps them for small base64-embedded thumbnails so the static
+ * build stays tiny enough to self-host on an ESP32.
  */
 
 type CardSpec = [
@@ -16,12 +21,23 @@ type CardSpec = [
   target?: string,
 ];
 
+function resolveImage(image: string | FlashCardImage): FlashCardImage {
+  if (typeof image !== "string") {
+    if (image.type === "url") {
+      const embedded = IMAGE_URIS[image.value];
+      if (embedded) return embedded;
+    }
+    return image;
+  }
+  return { type: "emoji", value: image };
+}
+
 function cards(specs: CardSpec[]): FlashCard[] {
   return specs.map(([id, front, back, image, target]) => ({
     id,
     front,
     back,
-    image: typeof image === "string" ? { type: "emoji", value: image } : image,
+    image: resolveImage(image),
     ...(target ? { target } : {}),
   }));
 }
