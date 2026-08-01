@@ -51,11 +51,53 @@ function seededShuffle<T>(array: T[], rng: () => number): T[] {
   return arr;
 }
 
-interface Question {
-  card: FlashCard;
-  promptText: string;
-  options: FlashCard[];
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+const NUMBER_BY_VALUE = Object.fromEntries(
+  Object.entries(NUMBER_WORDS).map(([k, v]) => [v, k])
+);
+function numberWord(n: number): string {
+  return NUMBER_BY_VALUE[n] ?? String(n);
 }
+
+// A counting card shows a number of objects and asks "how many?". It is a card
+// whose front is a number word and whose image is a set of emoji objects.
+function numberFor(card: FlashCard): number | null {
+  return card.front in NUMBER_WORDS && card.image?.type === "emoji"
+    ? NUMBER_WORDS[card.front]
+    : null;
+}
+
+interface CountAnswer {
+  id: string;
+  number: number;
+  word: string;
+}
+
+type Question =
+  | {
+      mode: "standard";
+      card: FlashCard;
+      promptText: string;
+      options: FlashCard[];
+    }
+  | {
+      mode: "count";
+      card: FlashCard;
+      count: number;
+      promptText: string;
+      options: CountAnswer[];
+    };
 
 type TestLevel = 1 | 2 | 3;
 
@@ -86,8 +128,55 @@ export function TestPlayer({ deck }: { deck: Deck }) {
     const distractorCount = testLevel === 1 ? 1 : 3;
     const targetCards = deck.cards.slice(0, 10);
 
+    const allCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
     return targetCards.map((targetCard, qi) => {
       const rng = mulberry32(hashCode(`${deck.id}:${testLevel}:${qi}`));
+
+      // Counting cards become "How many objects?" questions answered with a
+      // number, e.g. show 2 cars and the options are numerals (2, 4, 7...).
+      const count = numberFor(targetCard);
+      if (count !== null) {
+        const similar = testLevel === 3;
+        const pool = allCounts.filter((n) => n !== count);
+        if (similar) {
+          pool.sort((a, b) => Math.abs(a - count) - Math.abs(b - count));
+        }
+        const distractorNumbers = seededShuffle(pool, rng)
+          .slice(0, distractorCount)
+          .map((n) => ({ id: `count:${n}`, number: n, word: numberWord(n) }));
+        const options = seededShuffle(
+          [{ id: `count:${count}`, number: count, word: numberWord(count) }, ...distractorNumbers],
+          rng
+        );
+        return {
+          mode: "count",
+          card: targetCard,
+          count,
+          promptText: "Count the objects. How many are there?",
+          options,
+        };
+      }
+
+      // Colour cards should only ever be offered as colour swatches — never
+      // mixed with emoji/photo distractors.
+      if (targetCard.image?.type === "colour") {
+        const sameDeck = seededShuffle(
+          deck.cards.filter(
+            (c) => c.image?.type === "colour" && c.id !== targetCard.id
+          ),
+          rng
+        );
+        const distractorCards = sameDeck.slice(0, distractorCount);
+        const options = seededShuffle([targetCard, ...distractorCards], rng);
+        return {
+          mode: "standard",
+          card: targetCard,
+          promptText: `Which one is the ${targetCard.front}?`,
+          options,
+        };
+      }
+
       const sameDeckPool = deck.cards.filter(
         (c) => c.id !== targetCard.id && c.front !== targetCard.front
       );
@@ -110,7 +199,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
       const options = seededShuffle([targetCard, ...distractorCards], rng);
       const promptText = `Which one is the ${targetCard.front}?`;
 
-      return { card: targetCard, promptText, options };
+      return { mode: "standard", card: targetCard, promptText, options };
     });
   }, [deck.cards, deck.id, testLevel]);
 
@@ -133,13 +222,56 @@ export function TestPlayer({ deck }: { deck: Deck }) {
     return () => stopSpeaking();
   }, [questionIndex, phase, speakPrompt]);
 
-  const handleSelectOption = (option: FlashCard) => {
+  // Keyboard navigation: Tab works natively; arrow keys move focus between the
+  // answer buttons, Space/Enter activate them, and Backspace goes back a question.
+  useEffect(() => {
+    function focusOption(offset: number) {
+      const buttons = Array.from(
+        document.querySelectorAll<HTMLButtonElement>('button[id^="test-option-"]')
+      );
+      if (!buttons.length) return;
+      const idx = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      const next =
+        idx === -1 ? 0 : Math.max(0, Math.min(buttons.length - 1, idx + offset));
+      buttons[next].focus();
+    }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.repeat || isAnswered) return;
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          e.preventDefault();
+          focusOption(1);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          e.preventDefault();
+          focusOption(-1);
+          break;
+        case "Backspace":
+          if (questionIndex === 0) break;
+          e.preventDefault();
+          setQuestionIndex((i) => Math.max(0, i - 1));
+          setSelectedOptionId(null);
+          setIsAnswered(false);
+          break;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isAnswered, questionIndex]);
+
+  const handleSelectOption = (optionId: string) => {
     if (isAnswered) return;
 
-    setSelectedOptionId(option.id);
+    setSelectedOptionId(optionId);
     setIsAnswered(true);
 
-    const isCorrect = option.id === currentQ.card.id;
+    const isCorrect =
+      currentQ.mode === "count"
+        ? currentQ.options.find((o) => o.id === optionId)?.number === currentQ.count
+        : optionId === currentQ.card.id;
     setResults((prev) => ({ ...prev, [currentQ.card.id]: isCorrect }));
 
     if (isCorrect) {
@@ -167,10 +299,15 @@ export function TestPlayer({ deck }: { deck: Deck }) {
       });
     } else {
       setStreak(0);
-      speak(`Incorrect. The correct answer is ${currentQ.card.front}`, {
-        onStart: () => setSpeaking(true),
-        onEnd: () => setSpeaking(false),
-      });
+      speak(
+        `Incorrect. The correct answer is ${
+          currentQ.mode === "count" ? currentQ.count : currentQ.card.front
+        }`,
+        {
+          onStart: () => setSpeaking(true),
+          onEnd: () => setSpeaking(false),
+        }
+      );
     }
   };
 
@@ -350,63 +487,136 @@ export function TestPlayer({ deck }: { deck: Deck }) {
           </button>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Question {questionIndex + 1} of {total} — Tap the correct picture below
+          Question {questionIndex + 1} of {total} —{" "}
+          {currentQ.mode === "count"
+            ? "Tap the number that matches how many objects"
+            : "Tap the correct picture below"}
         </p>
       </div>
 
-      {/* 4 Pictorial Options Grid */}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6">
-        {currentQ.options.map((option) => {
-          const isSelected = selectedOptionId === option.id;
-          const isCorrect = option.id === currentQ.card.id;
+      {/* For counting questions, show the set of objects to count */}
+      {currentQ.mode === "count" ? (
+        <div className="mt-8 flex min-h-48 items-center justify-center rounded-3xl border border-border/60 bg-gradient-to-b from-muted/40 to-background p-6">
+          <CardVisual image={currentQ.card.image} />
+        </div>
+      ) : null}
 
-          let cardStyle =
-            "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg hover:scale-[1.02]";
-          if (isAnswered) {
-            if (isCorrect) {
-              cardStyle =
-                "border-4 border-green-500 bg-gradient-to-b from-green-500/10 to-green-500/20 shadow-lg shadow-green-500/20 scale-[1.02]";
-            } else if (isSelected) {
-              cardStyle =
-                "border-4 border-red-500 bg-gradient-to-b from-red-500/10 to-red-500/20 shadow-lg shadow-red-500/20 scale-[0.98]";
-            } else {
-              cardStyle = "border border-border/30 opacity-40 bg-card/50 scale-[0.96]";
+      {/* Options Grid */}
+      {currentQ.mode === "count" ? (
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6">
+          {currentQ.options.map((option) => {
+            const isSelected = selectedOptionId === option.id;
+            const isCorrect = option.id === `count:${currentQ.count}`;
+
+            let cardStyle =
+              "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg hover:scale-[1.02]";
+            if (isAnswered) {
+              if (isCorrect) {
+                cardStyle =
+                  "border-4 border-green-500 bg-gradient-to-b from-green-500/10 to-green-500/20 shadow-lg shadow-green-500/20 scale-[1.02]";
+              } else if (isSelected) {
+                cardStyle =
+                  "border-4 border-red-500 bg-gradient-to-b from-red-500/10 to-red-500/20 shadow-lg shadow-red-500/20 scale-[0.98]";
+              } else {
+                cardStyle =
+                  "border border-border/30 opacity-40 bg-card/50 scale-[0.96]";
+              }
             }
-          }
 
-          return (
-            <button
-              key={option.id}
-              id={`test-option-${option.id}`}
-              type="button"
-              disabled={isAnswered}
-              onClick={() => handleSelectOption(option)}
-              aria-label={`Option: ${option.front}`}
-              className={`relative flex aspect-[4/3] flex-col items-center justify-center rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
-            >
-              <div className="flex size-full items-center justify-center drop-shadow-sm">
-                <CardVisual image={option.image} />
-              </div>
+            return (
+              <button
+                key={option.id}
+                id={`test-option-${option.id}`}
+                type="button"
+                disabled={isAnswered}
+                onClick={() => handleSelectOption(option.id)}
+                aria-label={`Option: ${option.number}`}
+                className={`relative flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+              >
+                <span className="text-7xl font-black leading-none sm:text-8xl">
+                  {option.number}
+                </span>
+                <span className="text-lg font-semibold capitalize text-muted-foreground">
+                  {option.word}
+                </span>
 
-              {isAnswered && isCorrect ? (
-                <CheckCircle2 className="absolute right-3.5 top-3.5 size-8 text-green-500 drop-shadow-md animate-bounce" />
-              ) : null}
-              {isAnswered && isSelected && !isCorrect ? (
-                <XCircle className="absolute right-3.5 top-3.5 size-8 text-red-500 drop-shadow-md" />
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
+                {isAnswered && isCorrect ? (
+                  <CheckCircle2 className="absolute right-3.5 top-3.5 size-8 text-green-500 drop-shadow-md animate-bounce" />
+                ) : null}
+                {isAnswered && isSelected && !isCorrect ? (
+                  <XCircle className="absolute right-3.5 top-3.5 size-8 text-red-500 drop-shadow-md" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6">
+          {currentQ.options.map((option) => {
+            const isSelected = selectedOptionId === option.id;
+            const isCorrect = option.id === currentQ.card.id;
 
-      {/* Next Question Control & Correct Answer Callout */}
-      {isAnswered ? (
+            let cardStyle =
+              "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg hover:scale-[1.02]";
+            if (isAnswered) {
+              if (isCorrect) {
+                cardStyle =
+                  "border-4 border-green-500 bg-gradient-to-b from-green-500/10 to-green-500/20 shadow-lg shadow-green-500/20 scale-[1.02]";
+              } else if (isSelected) {
+                cardStyle =
+                  "border-4 border-red-500 bg-gradient-to-b from-red-500/10 to-red-500/20 shadow-lg shadow-red-500/20 scale-[0.98]";
+              } else {
+                cardStyle =
+                  "border border-border/30 opacity-40 bg-card/50 scale-[0.96]";
+              }
+            }
+
+            return (
+              <button
+                key={option.id}
+                id={`test-option-${option.id}`}
+                type="button"
+                disabled={isAnswered}
+                onClick={() => handleSelectOption(option.id)}
+                aria-label={`Option: ${option.front}`}
+                className={`relative flex aspect-[4/3] flex-col items-center justify-center rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+              >
+                <div className="flex size-full items-center justify-center drop-shadow-sm">
+                  <CardVisual image={option.image} />
+                </div>
+
+                {isAnswered && isCorrect ? (
+                  <CheckCircle2 className="absolute right-3.5 top-3.5 size-8 text-green-500 drop-shadow-md animate-bounce" />
+                ) : null}
+                {isAnswered && isSelected && !isCorrect ? (
+                  <XCircle className="absolute right-3.5 top-3.5 size-8 text-red-500 drop-shadow-md" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Next Question Control & Correct Answer Callout */}      {isAnswered ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 flex flex-col items-center gap-4"
         >
-          {selectedOptionId !== currentQ.card.id ? (
+          {currentQ.mode === "count" ? (
+            (() => {
+              const correctId = `count:${currentQ.count}`;
+              if (selectedOptionId === correctId) return null;
+              return (
+                <div className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-6 py-3 text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-300">
+                  <span className="text-xl">💡</span>
+                  <p className="text-sm font-semibold">
+                    Correct Answer: <span className="underline">{currentQ.count}</span>
+                  </p>
+                </div>
+              );
+            })()
+          ) : selectedOptionId !== currentQ.card.id ? (
             <div className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-6 py-3 text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-300">
               <span className="text-xl">💡</span>
               <p className="text-sm font-semibold">
@@ -447,6 +657,10 @@ export function TestPlayer({ deck }: { deck: Deck }) {
         isRewardDeck={deck.category === "reinforcement"}
         reduceMotion={reduceMotion}
       />
+
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        Keys: Tab navigate · ← → choose · Space select · Backspace previous question
+      </p>
     </main>
   );
 }

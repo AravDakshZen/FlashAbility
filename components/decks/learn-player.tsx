@@ -65,11 +65,19 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.repeat) return;
+
+      // Space activates the focused button natively — only use it to speak
+      // when focus is not on an interactive element.
+      if (e.key === " ") {
+        const el = e.target instanceof HTMLElement ? e.target : null;
+        if (el && el.closest("button, a, input, textarea, select, [contenteditable]"))
+          return;
+        e.preventDefault();
+        speakCurrent();
+        return;
+      }
+
       switch (e.key) {
-        case " ":
-          e.preventDefault();
-          speakCurrent();
-          break;
         case "f":
         case "F":
         case "r":
@@ -80,6 +88,8 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
           goNext();
           break;
         case "ArrowLeft":
+        case "Backspace":
+          e.preventDefault();
           goPrev();
           break;
       }
@@ -205,7 +215,7 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
       </div>
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Keys: Space listen · R reveal sentence · ← → previous / next
+        Keys: Tab navigate · Space listen · R reveal · ← → previous / next · Backspace back
       </p>
     </main>
   );

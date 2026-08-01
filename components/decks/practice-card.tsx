@@ -112,20 +112,6 @@ export function PracticeCard({
                   <CardVisual image={card.image} />
                 </motion.div>
 
-                {hideFrontWord ? (
-                  <motion.span
-                    className="font-heading text-6xl font-black tracking-tight text-muted-foreground/40"
-                    animate={reduceMotion ? {} : { opacity: [0.35, 0.9, 0.35] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    ?
-                  </motion.span>
-                ) : (
-                  <span className="font-heading text-center text-5xl font-black tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent sm:text-6xl">
-                    {card.front}
-                  </span>
-                )}
-
                 {showHint ? (
                   <span className="text-center text-xl font-semibold leading-snug text-muted-foreground sm:text-2xl">
                     {card.back ?? `This is a ${card.front}`}

@@ -305,8 +305,8 @@ export const decks: Deck[] = [
     cards: cards([
       ["cow-sound", "Cow", "A cow moos. Moo! 🐮", { type: "url", value: "/images/animals/cow.jpg" }],
       ["cat-sound", "Cat", "A cat meows. Meow! 🐱", { type: "url", value: "/images/animals/cat.jpg" }],
-      ["dog-sound", "Dog", "A dog barks. Woof woof! 🐶", { type: "url", value: "/images/animals/dog.jpg" }],
-      ["sheep-sound", "Sheep", "A sheep says baa baa! 🐑", "🐑"],
+      ["dog-sound", "Dog", "A dog barks. Bow boww! 🐶", { type: "url", value: "/images/animals/dog.jpg" }],
+      ["sheep-sound", "Sheep", "A sheep says baaa! 🐑", "🐑"],
       ["pig-sound", "Pig", "A pig oinks. Oink oink! 🐷", "🐷"],
       ["duck-sound", "Duck", "A duck quacks. Quack quack! 🦆", { type: "url", value: "/images/animals/duck.jpg" }],
       ["chicken-sound", "Chicken", "A chicken clucks. Cluck cluck! 🐔", "🐔"],
