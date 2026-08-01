@@ -61,10 +61,10 @@ export async function SiteHeader() {
             ) : (
               <>
                 <Link href="/login" className={utilityLinkClasses}>
-                  Login
+                  Log in
                 </Link>
                 <Link href="/signup" className={utilityLinkClasses}>
-                  Signup
+                  Sign up
                 </Link>
               </>
             )}
@@ -90,7 +90,7 @@ export async function SiteHeader() {
                     "hidden min-h-11 sm:inline-flex"
                   )}
                 >
-                  Login
+                  Log in
                 </Link>
                 <Link
                   href="/signup"
@@ -99,7 +99,7 @@ export async function SiteHeader() {
                     "hidden min-h-11 sm:inline-flex"
                   )}
                 >
-                  Signup
+                  Sign up
                 </Link>
               </>
             )}

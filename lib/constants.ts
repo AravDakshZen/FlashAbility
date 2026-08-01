@@ -26,8 +26,6 @@ export const navLinks = [
 export const footerLinks = {
   about: [
     { label: "About", href: "/#about" },
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
     { label: "GitHub", href: "https://github.com" },
     { label: "Contact", href: "/#contact" },
   ],

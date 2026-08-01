@@ -64,8 +64,12 @@ export function ForgotPasswordForm() {
               autoComplete="email"
               placeholder="you@example.com"
               aria-invalid={Boolean(state.errors?.email)}
+              aria-describedby={state.errors?.email ? "email-error" : undefined}
             />
-            <FieldError errors={[{ message: state.errors?.email }]} />
+            <FieldError
+              id="email-error"
+              errors={[{ message: state.errors?.email }]}
+            />
           </FieldContent>
         </Field>
 

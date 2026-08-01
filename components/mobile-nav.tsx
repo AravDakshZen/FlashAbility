@@ -120,7 +120,7 @@ export function MobileNav({
                 onClick={() => setOpen(false)}
                 className={buttonVariants({ size: "sm" })}
               >
-                Get Started
+                Sign up
               </Link>
             </>
           )}

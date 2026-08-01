@@ -67,8 +67,12 @@ export function ResetPasswordForm() {
               autoComplete="new-password"
               placeholder="At least 6 characters"
               aria-invalid={Boolean(state.errors?.password)}
+              aria-describedby={state.errors?.password ? "password-error" : undefined}
             />
-            <FieldError errors={[{ message: state.errors?.password }]} />
+            <FieldError
+              id="password-error"
+              errors={[{ message: state.errors?.password }]}
+            />
           </FieldContent>
         </Field>
 
@@ -81,8 +85,14 @@ export function ResetPasswordForm() {
               autoComplete="new-password"
               placeholder="Re-enter your password"
               aria-invalid={Boolean(state.errors?.confirmPassword)}
+              aria-describedby={
+                state.errors?.confirmPassword ? "confirm-password-error" : undefined
+              }
             />
-            <FieldError errors={[{ message: state.errors?.confirmPassword }]} />
+            <FieldError
+              id="confirm-password-error"
+              errors={[{ message: state.errors?.confirmPassword }]}
+            />
           </FieldContent>
         </Field>
 

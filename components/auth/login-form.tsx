@@ -75,8 +75,12 @@ export function LoginForm({ next }: { next: string }) {
               autoComplete="email"
               placeholder="you@example.com"
               aria-invalid={Boolean(state.errors?.email)}
+              aria-describedby={state.errors?.email ? "email-error" : undefined}
             />
-            <FieldError errors={[{ message: state.errors?.email }]} />
+            <FieldError
+              id="email-error"
+              errors={[{ message: state.errors?.email }]}
+            />
           </FieldContent>
         </Field>
 
@@ -96,8 +100,12 @@ export function LoginForm({ next }: { next: string }) {
               name="password"
               autoComplete="current-password"
               aria-invalid={Boolean(state.errors?.password)}
+              aria-describedby={state.errors?.password ? "password-error" : undefined}
             />
-            <FieldError errors={[{ message: state.errors?.password }]} />
+            <FieldError
+              id="password-error"
+              errors={[{ message: state.errors?.password }]}
+            />
           </FieldContent>
         </Field>
 
