@@ -1,7 +1,7 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/card";
 import { requireUser } from "@/lib/supabase/dal";
 import { logout } from "@/services/auth-service";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { BookOpen } from "lucide-react";
 
 /**
  * Minimal protected landing point after sign-in. Course decks will live here.
@@ -32,9 +35,16 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Your course library is coming soon. In the meantime, explore the
-              features on the homepage.
+              Your course library is coming soon. In the meantime, try a sample
+              deck built for every learner.
             </p>
+            <Link
+              href="/learn"
+              className={cn(buttonVariants({ size: "lg" }), "w-full gap-2")}
+            >
+              <BookOpen className="size-4" aria-hidden="true" />
+              Start Learning
+            </Link>
             <form action={logout}>
               <Button type="submit" variant="outline" className="w-full">
                 Sign out

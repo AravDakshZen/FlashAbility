@@ -29,23 +29,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
+    let isMounted = true;
+    let unsubscribe: (() => void) | undefined;
 
-    supabase.auth.getSession().then(({ data }) => {
+    async function initAuth() {
+      let supabase: ReturnType<typeof getSupabaseBrowserClient>;
+      try {
+        supabase = getSupabaseBrowserClient();
+      } catch {
+        // Supabase not configured — degrade to signed-out instead of crashing.
+        if (isMounted) setLoading(false);
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
-    });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
-    });
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, newSession) => {
+        if (!isMounted) return;
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+      unsubscribe = subscription.unsubscribe;
+    }
+
+    void initAuth();
+
+    return () => {
+      isMounted = false;
+      unsubscribe?.();
+    };
   }, []);
 
   return (

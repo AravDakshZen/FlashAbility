@@ -175,10 +175,10 @@ export default function HomePage() {
             <Reveal delay={0.15}>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/signup"
+                  href="/learn"
                   className={cn(buttonVariants({ size: "lg" }), "px-6")}
                 >
-                  Get Started <ArrowRight />
+                  Start Learning <ArrowRight />
                 </Link>
                 <Link
                   href="/#features"
@@ -363,7 +363,7 @@ export default function HomePage() {
               </p>
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/signup"
+                  href="/learn"
                   className={cn(buttonVariants({ size: "lg" }), "px-6")}
                 >
                   Start Learning Free
