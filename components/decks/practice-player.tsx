@@ -23,6 +23,7 @@ import {
 
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CardVisual } from "@/components/decks/card-visual";
 import {
   levelFromPoints,
   recordSession,
@@ -124,16 +125,16 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
     prevLevel.current = lv;
   }, [points]);
 
-  const markResult = useCallback(
-    (result: Result) => {
-      if (phase !== "practice" || results[card.id]) return;
+  // Null when the card was already scored — callers use it for completion tallies.
+  const scoreCard = useCallback(
+    (result: Result): { points: number; stars: number; streak: number } | null => {
+      if (phase !== "practice" || results[card.id]) return null;
 
       setResults((prev) => ({ ...prev, [card.id]: result }));
       setFlipped(false);
       setSpeaking(false);
       stopSpeaking();
 
-      // Compute the new totals first so the finish branch uses fresh values.
       let newPoints = points;
       let newStars = sessionStars;
       const newStreak = result === "correct" ? streak + 1 : 0;
@@ -169,49 +170,18 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         setPoints(newPoints);
       } else {
         setStreak(0);
-        setAnnouncement("Let's try again. You can do it!");
+        setAnnouncement("Try again — you can do it!");
       }
 
-      // Advance or finish.
-      const nextIndex = index + 1;
-      if (nextIndex >= total) {
-        const finalCorrect = correctCount + (result === "correct" ? 1 : 0);
-
-        // Completion bonuses.
-        if (finalCorrect === total) {
-          newPoints += POINTS_PERFECT;
-          setAnnouncement(`Perfect session! Plus ${POINTS_PERFECT} bonus points!`);
-        } else {
-          newPoints += POINTS_COMPLETION;
-        }
-        setPoints(newPoints);
-
-        // Wait a beat so the last celebration/points render, then show summary.
-        window.setTimeout(() => {
-          if (!summarySaved.current) {
-            summarySaved.current = true;
-            const { newBadges: badges } = recordSession(
-              {
-                deckId: deck.id,
-                deckTitle: deck.title,
-                correct: finalCorrect,
-                total,
-                stars: newStars,
-                points: newPoints,
-                date: new Date().toISOString(),
-              },
-              Math.max(streak, newStreak)
-            );
-            setNewBadges(badges.map((b) => b.label));
-          }
-          setPhase("summary");
-        }, 700);
-      } else {
-        setIndex(nextIndex);
-      }
+      return { points: newPoints, stars: newStars, streak: newStreak };
     },
-    [phase, results, card.id, streak, points, sessionStars, index, total, correctCount, deck.id, deck.title]
+    [phase, results, card.id, streak, points, sessionStars]
   );
+
+  const tryAgain = useCallback(() => {
+    scoreCard("miss");
+    speakWord();
+  }, [scoreCard, speakWord]);
 
   const restart = useCallback(() => {
     summarySaved.current = false;
@@ -227,11 +197,54 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
   }, [deck.cards]);
 
   const goNext = useCallback(() => {
-    if (index < total - 1) setIndex((i) => i + 1);
-  }, [index, total]);
+    if (phase !== "practice") return;
+
+    const scored = scoreCard("correct");
+    const nextPoints = (scored?.points ?? points) + 0;
+    const nextStars = scored?.stars ?? sessionStars;
+    const finalStreak = scored?.streak ?? streak;
+    const finalCorrect = correctCount + (scored ? 1 : 0);
+
+    const nextIndex = index + 1;
+    if (nextIndex >= total) {
+      let completionPoints = nextPoints;
+      if (finalCorrect === total) {
+        completionPoints += POINTS_PERFECT;
+        setAnnouncement(`Perfect session! Plus ${POINTS_PERFECT} bonus points!`);
+      } else {
+        completionPoints += POINTS_COMPLETION;
+      }
+      setPoints(completionPoints);
+
+      window.setTimeout(() => {
+        if (!summarySaved.current) {
+          summarySaved.current = true;
+          const { newBadges: badges } = recordSession(
+            {
+              deckId: deck.id,
+              deckTitle: deck.title,
+              correct: finalCorrect,
+              total,
+              stars: nextStars,
+              points: completionPoints,
+              date: new Date().toISOString(),
+            },
+            finalStreak
+          );
+          setNewBadges(badges.map((b) => b.label));
+        }
+        setPhase("summary");
+      }, 700);
+    } else {
+      setIndex(nextIndex);
+    }
+  }, [phase, scoreCard, points, sessionStars, streak, correctCount, index, total, deck.id, deck.title]);
+
   const goPrev = useCallback(() => {
-    if (index > 0) setIndex((i) => i - 1);
-  }, [index]);
+    if (phase !== "practice" || index <= 0) return;
+    setFlipped(false);
+    setIndex((i) => i - 1);
+  }, [phase, index]);
 
   // Keyboard controls.
   useEffect(() => {
@@ -253,19 +266,15 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         case "ArrowLeft":
           goPrev();
           break;
-        case "c":
-        case "C":
-          markResult("correct");
-          break;
         case "t":
         case "T":
-          markResult("miss");
+          tryAgain();
           break;
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, speakWord, goNext, goPrev, markResult]);
+  }, [phase, speakWord, goNext, goPrev, tryAgain]);
 
   const progressPct = Math.round((answeredCount / total) * 100);
 
@@ -370,8 +379,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
     );
   }
 
-  const emoji = card.image?.type === "emoji" ? card.image.value : "";
-
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6">
       {/* Top bar */}
@@ -427,24 +434,15 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         </p>
       </div>
 
-      {/* Card */}
-      <div className="mt-6 flex flex-1 items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={index === 0}
-          aria-label="Previous card"
-          className="hidden size-14 shrink-0 items-center justify-center rounded-full border bg-background text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-40 focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none sm:inline-flex"
-        >
-          <ArrowLeft className="size-6" aria-hidden="true" />
-        </button>
-
+      {/* Card — width scales with viewport height so it fits any aspect ratio */}
+      <div className="mt-6 flex min-h-0 flex-1 flex-col items-center justify-center">
         <button
           type="button"
           onClick={() => setFlipped((f) => !f)}
           aria-pressed={flipped}
           aria-label={flipped ? "Show front of card" : "Show back of card"}
-          className="group/card relative aspect-[4/5] w-full max-w-md [perspective:1200px] focus-visible:outline-none"
+          className="group/card relative aspect-[4/5] [perspective:1200px] focus-visible:outline-none"
+          style={{ width: "min(28rem, 100%, max(14rem, calc((100dvh - 340px) * 0.8)))" }}
         >
           <motion.div
             className="relative h-full w-full [transform-style:preserve-3d]"
@@ -457,12 +455,10 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           >
             {/* Front */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-3xl border bg-card p-6 text-card-foreground shadow-lg [backface-visibility:hidden]"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-6 overflow-hidden rounded-3xl border bg-card p-6 text-card-foreground shadow-lg [backface-visibility:hidden]"
               style={{ borderTop: `6px solid ${deck.accent}` }}
             >
-              <span className="text-8xl" aria-hidden="true">
-                {emoji}
-              </span>
+              <CardVisual image={card.image} />
               <span className="font-heading text-5xl font-bold tracking-tight break-words text-center sm:text-6xl">
                 {card.front}
               </span>
@@ -473,7 +469,7 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
 
             {/* Back */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-3xl border bg-muted p-6 text-foreground [backface-visibility:hidden] [transform:rotateY(180deg)]"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border bg-muted p-6 text-foreground [backface-visibility:hidden] [transform:rotateY(180deg)]"
             >
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground" aria-hidden="true">
                 Prompt
@@ -488,19 +484,44 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           </motion.div>
         </button>
 
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={index >= total - 1}
-          aria-label="Next card"
-          className="hidden size-14 shrink-0 items-center justify-center rounded-full border bg-background text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-40 focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none sm:inline-flex"
-        >
-          <ArrowRight className="size-6" aria-hidden="true" />
-        </button>
+        {/* Bottom-of-card navigation */}
+        <div className="mt-5 flex w-full max-w-md items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={index === 0}
+            aria-label="Previous card"
+            className="inline-flex size-14 shrink-0 items-center justify-center rounded-full border bg-background text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-40 focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <ArrowLeft className="size-6" aria-hidden="true" />
+          </button>
+          <p className="text-sm font-medium" aria-hidden="true">
+            Card {index + 1} of {total}
+          </p>
+          {index >= total - 1 ? (
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label="Finish practice"
+              className="inline-flex size-14 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <Check className="size-6" aria-hidden="true" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label="Next card"
+              className="inline-flex size-14 shrink-0 items-center justify-center rounded-full border bg-background text-foreground shadow-xs transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <ArrowRight className="size-6" aria-hidden="true" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Speak + flip controls */}
-      <div className="mt-6 flex items-center justify-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <button
           type="button"
           onClick={speakWord}
@@ -531,32 +552,20 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           <RotateCcw className="size-5" aria-hidden="true" />
           Flip
         </button>
-      </div>
 
-      {/* Answer buttons */}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        {/* Single Try Again — marks the card as not-yet-mastered and re-speaks */}
         <button
           type="button"
-          onClick={() => markResult("correct")}
-          disabled={Boolean(results[card.id])}
-          className="inline-flex min-h-16 flex-1 items-center justify-center gap-2.5 rounded-2xl bg-green-600 px-6 text-lg font-semibold text-white shadow-md transition-colors hover:bg-green-700 focus-visible:ring-3 focus-visible:ring-green-600/50 focus-visible:outline-none disabled:opacity-40"
+          onClick={tryAgain}
+          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-400 px-8 text-base font-semibold text-amber-950 shadow-sm transition-colors hover:bg-amber-500 focus-visible:ring-3 focus-visible:ring-amber-400/50 focus-visible:outline-none"
         >
-          <Check className="size-6" aria-hidden="true" />
-          Correct
-        </button>
-        <button
-          type="button"
-          onClick={() => markResult("miss")}
-          disabled={Boolean(results[card.id])}
-          className="inline-flex min-h-16 flex-1 items-center justify-center gap-2.5 rounded-2xl bg-amber-400 px-6 text-lg font-semibold text-amber-950 shadow-md transition-colors hover:bg-amber-500 focus-visible:ring-3 focus-visible:ring-amber-400/50 focus-visible:outline-none disabled:opacity-40"
-        >
-          <RotateCcw className="size-6" aria-hidden="true" />
+          <RotateCcw className="size-5" aria-hidden="true" />
           Try Again
         </button>
       </div>
 
       <p className="mt-4 text-center text-xs text-muted-foreground" aria-hidden="true">
-        Keys: Space listen · F flip · ← → cards · C correct · T try again
+        Keys: Space listen · F flip · ← → cards · T try again
       </p>
 
       {/* Floating points */}

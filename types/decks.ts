@@ -15,10 +15,24 @@ export type DeckCategory =
   | "math"
   | "reinforcement";
 
-export interface FlashCardImage {
-  type: "emoji" | "url";
-  value: string;
-}
+export type FlashCardImage =
+  | { type: "emoji"; value: string }
+  | { type: "url"; value: string }
+  | { type: "numeral"; value: string }
+  | { type: "colour"; value: string }
+  | { type: "shape"; value: ShapeName };
+
+export type ShapeName =
+  | "circle"
+  | "square"
+  | "triangle"
+  | "rectangle"
+  | "star"
+  | "heart"
+  | "oval"
+  | "diamond"
+  | "crescent"
+  | "cross";
 
 export interface FlashCard {
   id: string;

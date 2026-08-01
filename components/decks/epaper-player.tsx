@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/tts";
+import { CardVisual } from "@/components/decks/card-visual";
 import type { Deck } from "@/types/decks";
 
 /**
@@ -113,6 +114,7 @@ export function EpaperPlayer({ deck }: { deck: Deck }) {
           </>
         ) : (
           <>
+            {card.image?.type === "url" ? <CardVisual image={card.image} /> : null}
             <span className="text-8xl font-bold sm:text-9xl">{card.front}</span>
             <span className="text-sm font-bold uppercase tracking-widest">
               Tap to flip
