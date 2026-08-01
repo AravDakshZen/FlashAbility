@@ -23,26 +23,9 @@ const mobileLinks = [
   { label: "Contact", href: "/#contact" },
 ] as const;
 
-const utilityLinkClasses =
-  "inline-flex min-h-9 items-center rounded-md px-2.5 text-xs font-medium text-white/90 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-3 focus-visible:ring-white/50";
-
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50">
-      <div className="bg-black text-white">
-        <div className="mx-auto flex h-9 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <p className="truncate text-xs font-semibold tracking-wide">
-            FlashAbility
-          </p>
-          <div className="flex shrink-0 items-center gap-1">
-            <span className="mx-1 h-3.5 w-px bg-white/25" aria-hidden="true" />
-            <Link href="/dashboard" className={utilityLinkClasses}>
-              Dashboard
-            </Link>
-          </div>
-        </div>
-      </div>
-
       <div className="border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Logo tagline className="shrink-0" />
