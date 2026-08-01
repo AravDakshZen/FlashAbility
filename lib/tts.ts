@@ -1,17 +1,23 @@
 /**
  * Text-to-speech wrapper built on the Web Speech API.
  *
- * Voice preference order: Indian English (en-IN) → British English (en-GB) →
- * US English (en-US), with Hindi (hi-IN) available for multilingual decks.
+ * Default voice preference order: Indian English (en-IN) → British English
+ * (en-GB) → US English (en-US), with Hindi (hi-IN) available for multilingual
+ * decks. Counting prompts ("How many?") use a distinct voice — `voice:
+ * "counting"` flips the preference to en-US first so it sounds different from
+ * the default reader.
  *
  * Everything is guarded so this module is safe to import from server code,
  * even though it is only ever *called* from client components.
  */
 
+export type VoiceKind = "default" | "counting";
+
 export interface SpeakOptions {
   rate?: number;
   pitch?: number;
   lang?: string;
+  voice?: VoiceKind;
   onStart?: () => void;
   onEnd?: () => void;
 }
@@ -21,11 +27,13 @@ export function isTtsSupported(): boolean {
   return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 }
 
-const PREFERRED_LANGS = ["en-IN", "en-GB", "en-US", "hi-IN"];
+const DEFAULT_LANG_ORDER = ["en-IN", "en-GB", "en-US", "hi-IN"];
+const COUNTING_LANG_ORDER = ["en-US", "en-GB", "en-IN", "hi-IN"];
 
-export function pickVoice(lang?: string): SpeechSynthesisVoice | null {
+export function pickVoice(lang?: string, voiceKind: VoiceKind = "default"): SpeechSynthesisVoice | null {
   if (!isTtsSupported()) return null;
   const voices = window.speechSynthesis.getVoices();
+  const order = voiceKind === "counting" ? COUNTING_LANG_ORDER : DEFAULT_LANG_ORDER;
 
   if (lang) {
     const exact = voices.find((voice) => voice.lang === lang);
@@ -36,7 +44,7 @@ export function pickVoice(lang?: string): SpeechSynthesisVoice | null {
     if (prefix) return prefix;
   }
 
-  for (const preferred of PREFERRED_LANGS) {
+  for (const preferred of order) {
     const voice = voices.find((v) => v.lang === preferred);
     if (voice) return voice;
   }
@@ -51,7 +59,7 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
   synth.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  const voice = pickVoice(opts.lang);
+  const voice = pickVoice(opts.lang, opts.voice);
   if (voice) utterance.voice = voice;
   utterance.lang = opts.lang ?? voice?.lang ?? "en-IN";
   utterance.rate = opts.rate ?? 0.9; // slightly slower for learners

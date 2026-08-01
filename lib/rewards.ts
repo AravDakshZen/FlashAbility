@@ -3,11 +3,18 @@
  *
  * Stored in localStorage under "eflash:rewards" so progress survives
  * refreshes without any backend. All functions are client-safe.
+ *
+ * Rewards are earned by TESTS only — lesson practice is pure learning and
+ * records progress without awarding stars, points, or badges.
  */
 
+export type SessionKind = "lesson" | "test";
+
 export interface SessionRecord {
+  kind: SessionKind;
   deckId: string;
   deckTitle: string;
+  courseId?: string;
   correct: number;
   total: number;
   stars: number;
@@ -70,7 +77,12 @@ export function loadRewards(): RewardState {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY_STATE;
     const parsed = JSON.parse(raw) as Partial<RewardState>;
-    return { ...EMPTY_STATE, ...parsed };
+    // Migrate records saved before session kinds existed — they were lessons.
+    const sessions = (parsed.sessions ?? []).map((s) => ({
+      ...s,
+      kind: s.kind ?? "lesson",
+    }));
+    return { ...EMPTY_STATE, ...parsed, sessions };
   } catch {
     return EMPTY_STATE;
   }
@@ -134,16 +146,26 @@ export function levelFromPoints(points: number): LevelInfo {
   return { level, title, nextTitle, pointsIntoLevel, pointsForNext, progress };
 }
 
+// Badges are earned through tests. `first-practice`/`decks-3` were repurposed
+// from deck-based to test-based goals.
 const BADGE_DEFS = [
-  { id: "first-practice", label: "First Practice", description: "Completed your first practice session" },
+  { id: "first-practice", label: "First Test", description: "Completed your first course test" },
   { id: "star-10", label: "10 Stars", description: "Earned 10 stars in total" },
   { id: "star-50", label: "50 Stars", description: "Earned 50 stars in total" },
-  { id: "decks-3", label: "Explorer", description: "Practiced 3 different decks" },
-  { id: "accuracy-90", label: "Sharpshooter", description: "Got 90%+ correct across sessions (min 10 answers)" },
-  { id: "streak-5", label: "On Fire", description: "Reached a 5-streak of correct answers" },
+  { id: "decks-3", label: "Course Explorer", description: "Took tests on 3 different courses" },
+  { id: "accuracy-90", label: "Sharpshooter", description: "Got 90%+ correct across tests (min 10 answers)" },
+  { id: "streak-5", label: "On Fire", description: "Reached a 5-streak of correct answers in a test" },
 ] as const;
 
 export type BadgeId = (typeof BADGE_DEFS)[number]["id"];
+
+/** All test sessions for a course, newest first. */
+export function getTestSessions(state: RewardState, courseId: string): SessionRecord[] {
+  return state.sessions
+    .filter((s) => s.kind === "test" && s.courseId === courseId)
+    .slice()
+    .reverse();
+}
 
 export function recordSession(
   record: SessionRecord,
@@ -151,20 +173,25 @@ export function recordSession(
 ): { state: RewardState; newBadges: Badge[] } {
   const state = loadRewards();
   state.sessions = [...state.sessions, record];
-  state.stars += record.stars;
-  state.points += record.points;
-  state.bestStreak = Math.max(state.bestStreak, bestStreak);
 
-  const totalAnswers = state.sessions.reduce((s, r) => s + r.total, 0);
-  const totalCorrect = state.sessions.reduce((s, r) => s + r.correct, 0);
+  // Only tests award stars, points, and streaks — lessons record progress only.
+  if (record.kind === "test") {
+    state.stars += record.stars;
+    state.points += record.points;
+    state.bestStreak = Math.max(state.bestStreak, bestStreak);
+  }
+
+  const tests = state.sessions.filter((s) => s.kind === "test");
+  const totalAnswers = tests.reduce((s, r) => s + r.total, 0);
+  const totalCorrect = tests.reduce((s, r) => s + r.correct, 0);
   const accuracy = totalAnswers > 0 ? totalCorrect / totalAnswers : 0;
-  const uniqueDecks = new Set(state.sessions.map((s) => s.deckId)).size;
+  const uniqueCourses = new Set(tests.map((s) => s.courseId).filter(Boolean)).size;
 
   const earned: Record<BadgeId, boolean> = {
-    "first-practice": state.sessions.length >= 1,
+    "first-practice": tests.length >= 1,
     "star-10": state.stars >= 10,
     "star-50": state.stars >= 50,
-    "decks-3": uniqueDecks >= 3,
+    "decks-3": uniqueCourses >= 3,
     "accuracy-90": totalAnswers >= 10 && accuracy >= 0.9,
     "streak-5": state.bestStreak >= 5,
   };

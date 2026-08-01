@@ -4,17 +4,18 @@ import {
   ArrowLeft,
   BookOpen,
   Calculator,
+  ClipboardCheck,
   GraduationCap,
   Monitor,
   PawPrint,
   Play,
   Speech,
-  Star,
   type LucideIcon,
 } from "lucide-react";
 import type { Metadata } from "next";
 
 import { LessonProgress } from "@/components/decks/lesson-progress";
+import { TestProgress } from "@/components/decks/test-progress";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,32 +68,56 @@ export default async function CourseDetailPage({
           All courses
         </Link>
 
-        <header className="mt-6 overflow-hidden rounded-2xl border bg-card shadow-sm">
-          <div className="h-1 bg-foreground" aria-hidden="true" />
-          <div className="px-6 py-6 sm:px-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <span
-                  className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-foreground text-background"
-                  aria-hidden="true"
-                >
-                  <Icon className="size-7" />
-                </span>
-                <div>
-                  <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-                    {course.title}
-                  </h1>
+        <header className="mt-6 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+            <div className="h-1 bg-foreground" aria-hidden="true" />
+            <div className="px-6 py-6 sm:px-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <span
+                    className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-foreground text-background"
+                    aria-hidden="true"
+                  >
+                    <Icon className="size-7" />
+                  </span>
+                  <div>
+                    <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+                      {course.title}
+                    </h1>
+                  </div>
                 </div>
+                <Badge variant="secondary" className="min-h-8 px-3 py-1.5">
+                  {lessons.length} lesson{lessons.length !== 1 ? "s" : ""} ·{" "}
+                  {totalCards} cards
+                </Badge>
               </div>
-              <Badge variant="secondary" className="min-h-8 px-3 py-1.5">
-                {lessons.length} lesson{lessons.length !== 1 ? "s" : ""} ·{" "}
-                {totalCards} cards
-              </Badge>
+              <p className="mt-4 max-w-2xl text-pretty text-muted-foreground">
+                {course.description}
+              </p>
             </div>
-            <p className="mt-4 max-w-2xl text-pretty text-muted-foreground">
-              {course.description}
-            </p>
           </div>
+
+          {lessons.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              <Link
+                href={`/decks/${lessons[0].id}/practice`}
+                className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base")}
+              >
+                <Play className="size-5" aria-hidden="true" />
+                Practice
+              </Link>
+              <Link
+                href={`/decks/${lessons[0].id}/epaper`}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "min-h-12 px-8 text-base"
+                )}
+              >
+                <Monitor className="size-5" aria-hidden="true" />
+                Practice in E-Paper
+              </Link>
+            </div>
+          ) : null}
         </header>
 
         <section aria-label="Lessons" className="mt-10">
@@ -152,15 +177,40 @@ export default async function CourseDetailPage({
           </ol>
         </section>
 
-        <section aria-label="Earn stars" className="mt-10 rounded-2xl border border-dashed bg-muted/30 p-6 text-center">
-          <Star className="mx-auto size-8 text-foreground" aria-hidden="true" />
-          <h2 className="font-heading mt-2 text-lg font-semibold tracking-tight">
-            Earn stars in every lesson
-          </h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Answer correctly 3 times in a row to earn a star. Stars and points
-            add up to new levels and badges.
-          </p>
+        <section
+          aria-label="Course test"
+          className="mt-10 overflow-hidden rounded-2xl border bg-card shadow-sm"
+        >
+          <div className="h-1 bg-primary" aria-hidden="true" />
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-8">
+            <div className="flex items-start gap-4">
+              <span
+                className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+                aria-hidden="true"
+              >
+                <ClipboardCheck className="size-7" />
+              </span>
+              <div>
+                <h2 className="font-heading text-xl font-semibold tracking-tight">
+                  Course Test
+                </h2>
+                <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                  Prove what you learned — questions are drawn from every lesson.
+                  Stars, points, and badges are earned here.
+                </p>
+                <div className="mt-3">
+                  <TestProgress courseId={course.id} courseTitle={course.title} />
+                </div>
+              </div>
+            </div>
+            <Link
+              href={`/courses/${course.id}/test`}
+              className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base")}
+            >
+              <ClipboardCheck className="size-5" aria-hidden="true" />
+              Take the Test
+            </Link>
+          </div>
         </section>
       </main>
       <SiteFooter />
