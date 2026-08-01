@@ -101,7 +101,7 @@ export default function CoursesPage() {
             </h2>
             <p className="mt-2 text-pretty text-muted-foreground">
               Browse the full flashcard library — filter by category, then tap a
-              deck to practice or open e-paper mode.
+              deck to learn, test, or open e-paper mode.
             </p>
           </div>
           <div className="mt-6">

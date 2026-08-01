@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Node helper scripts (CJS/ESM) and local skill infra, not app code:
+    "scripts/**",
+    "deploy/**",
+    ".opencode/**",
   ]),
 ]);
 

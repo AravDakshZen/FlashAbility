@@ -1,4 +1,5 @@
 import type { Course, Deck, FlashCard, FlashCardImage } from "@/types/decks";
+import { IMAGE_URIS } from "@/lib/data/images";
 
 /**
  * Seed content for e-Flash Cards.
@@ -6,6 +7,10 @@ import type { Course, Deck, FlashCard, FlashCardImage } from "@/types/decks";
  * Every deck is clinically sensible, kid-friendly, and designed so the front
  * word/phrase can be spoken by TTS and understood visually (emoji + text) —
  * critical for learners with speech and hearing disabilities.
+ *
+ * Photo cards (animals/objects) reference `/images/...` paths in the specs;
+ * `resolveImage` swaps them for small base64-embedded thumbnails so the static
+ * build stays tiny enough to self-host on an ESP32.
  */
 
 type CardSpec = [
@@ -16,12 +21,23 @@ type CardSpec = [
   target?: string,
 ];
 
+function resolveImage(image: string | FlashCardImage): FlashCardImage {
+  if (typeof image !== "string") {
+    if (image.type === "url") {
+      const embedded = IMAGE_URIS[image.value];
+      if (embedded) return embedded;
+    }
+    return image;
+  }
+  return { type: "emoji", value: image };
+}
+
 function cards(specs: CardSpec[]): FlashCard[] {
   return specs.map(([id, front, back, image, target]) => ({
     id,
     front,
     back,
-    image: typeof image === "string" ? { type: "emoji", value: image } : image,
+    image: resolveImage(image),
     ...(target ? { target } : {}),
   }));
 }
@@ -255,25 +271,25 @@ export const decks: Deck[] = [
     targetAge: "2–6 years",
     hint: "Course: Animals · Lesson 1. Make the animal sound together after naming it.",
     cards: cards([
-      ["dog", "Dog", "A dog says woof!", { type: "url", value: "/images/animals/dog.jpg" }],
-      ["cat", "Cat", "A cat says meow!", { type: "url", value: "/images/animals/cat.jpg" }],
-      ["cow", "Cow", "A cow gives us milk!", { type: "url", value: "/images/animals/cow.jpg" }],
+      ["dog", "Dog", "A dog barks. Woof woof!", { type: "url", value: "/images/animals/dog.jpg" }],
+      ["cat", "Cat", "A cat meows. Meow!", { type: "url", value: "/images/animals/cat.jpg" }],
+      ["cow", "Cow", "A cow moos and gives us milk!", { type: "url", value: "/images/animals/cow.jpg" }],
       ["horse", "Horse", "A horse can run fast!", { type: "url", value: "/images/animals/horse.jpg" }],
-      ["sheep", "Sheep", "A sheep says baa!", "🐑"],
-      ["pig", "Pig", "A pig says oink!", "🐷"],
-      ["chicken", "Chicken", "A chicken says cluck!", "🐔"],
-      ["duck", "Duck", "A duck says quack!", { type: "url", value: "/images/animals/duck.jpg" }],
+      ["sheep", "Sheep", "A sheep says baa baa!", "🐑"],
+      ["pig", "Pig", "A pig oinks. Oink oink!", "🐷"],
+      ["chicken", "Chicken", "A chicken clucks. Cluck cluck!", "🐔"],
+      ["duck", "Duck", "A duck quacks. Quack quack!", { type: "url", value: "/images/animals/duck.jpg" }],
       ["elephant", "Elephant", "An elephant has a long trunk!", { type: "url", value: "/images/animals/elephant.jpg" }],
-      ["lion", "Lion", "A lion says roar!", { type: "url", value: "/images/animals/lion.jpg" }],
+      ["lion", "Lion", "A lion roars. Roar!", { type: "url", value: "/images/animals/lion.jpg" }],
       ["monkey", "Monkey", "A monkey loves to swing!", { type: "url", value: "/images/animals/monkey.jpg" }],
       ["tiger", "Tiger", "A tiger has stripes!", "🐯"],
       ["giraffe", "Giraffe", "A giraffe has a long neck!", "🦒"],
       ["zebra", "Zebra", "A zebra has stripes too!", "🦓"],
       ["bear", "Bear", "A bear is big and fuzzy!", "🐻"],
-      ["frog", "Frog", "A frog can jump high!", "🐸"],
+      ["frog", "Frog", "A frog croaks and jumps high. Ribbit!", "🐸"],
       ["fish", "Fish", "A fish swims in water!", "🐟"],
-      ["bird", "Bird", "A bird can fly!", "🐦"],
-      ["rabbit", "Rabbit", "A rabbit hops!", "🐰"],
+      ["bird", "Bird", "A bird can fly and sing!", "🐦"],
+      ["rabbit", "Rabbit", "A rabbit hops and has long ears!", "🐰"],
       ["turtle", "Turtle", "A turtle is slow and steady!", "🐢"],
     ]),
   },
@@ -287,16 +303,16 @@ export const decks: Deck[] = [
     targetAge: "1–5 years",
     hint: "Course: Animals · Lesson 2. Pause and let the learner make the sound first.",
     cards: cards([
-      ["cow-sound", "Cow", "Moo! 🐮", { type: "url", value: "/images/animals/cow.jpg" }],
-      ["cat-sound", "Cat", "Meow! 🐱", { type: "url", value: "/images/animals/cat.jpg" }],
-      ["dog-sound", "Dog", "Woof woof! 🐶", { type: "url", value: "/images/animals/dog.jpg" }],
-      ["sheep-sound", "Sheep", "Baa baa! 🐑", "🐑"],
-      ["pig-sound", "Pig", "Oink oink! 🐷", "🐷"],
-      ["duck-sound", "Duck", "Quack quack! 🦆", { type: "url", value: "/images/animals/duck.jpg" }],
-      ["chicken-sound", "Chicken", "Cluck cluck! 🐔", "🐔"],
-      ["horse-sound", "Horse", "Neigh! 🐴", { type: "url", value: "/images/animals/horse.jpg" }],
-      ["lion-sound", "Lion", "Roar! 🦁", { type: "url", value: "/images/animals/lion.jpg" }],
-      ["frog-sound", "Frog", "Ribbit ribbit! 🐸", "🐸"],
+      ["cow-sound", "Cow", "A cow moos. Moo! 🐮", { type: "url", value: "/images/animals/cow.jpg" }],
+      ["cat-sound", "Cat", "A cat meows. Meow! 🐱", { type: "url", value: "/images/animals/cat.jpg" }],
+      ["dog-sound", "Dog", "A dog barks. Woof woof! 🐶", { type: "url", value: "/images/animals/dog.jpg" }],
+      ["sheep-sound", "Sheep", "A sheep says baa baa! 🐑", "🐑"],
+      ["pig-sound", "Pig", "A pig oinks. Oink oink! 🐷", "🐷"],
+      ["duck-sound", "Duck", "A duck quacks. Quack quack! 🦆", { type: "url", value: "/images/animals/duck.jpg" }],
+      ["chicken-sound", "Chicken", "A chicken clucks. Cluck cluck! 🐔", "🐔"],
+      ["horse-sound", "Horse", "A horse neighs. Neigh! 🐴", { type: "url", value: "/images/animals/horse.jpg" }],
+      ["lion-sound", "Lion", "A lion roars. Roar! 🦁", { type: "url", value: "/images/animals/lion.jpg" }],
+      ["frog-sound", "Frog", "A frog croaks. Ribbit ribbit! 🐸", "🐸"],
     ]),
   },
   {

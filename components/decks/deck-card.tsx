@@ -53,7 +53,7 @@ export function DeckCard({
 
   return (
     <Link
-      href={`/decks/${deck.id}`}
+      href={`/decks/${deck.id}/learn`}
       className={cn(
         "group/deck block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring",
         className

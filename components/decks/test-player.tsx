@@ -1,415 +1,340 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Check,
-  ChevronRight,
-  Star,
-  Trophy,
-  Volume2,
-  X,
-  Zap,
-} from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, CheckCircle2, Flame, Star, Trophy, Volume2, XCircle, Zap, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { CardVisual } from "@/components/decks/card-visual";
-import {
-  getRewardsServerSnapshot,
-  getRewardsSnapshot,
-  levelFromPoints,
-  recordSession,
-  subscribeRewards,
-} from "@/lib/rewards";
+import { CelebrationOverlay, type Celebration } from "@/components/decks/celebration-overlay";
+import { TestSummary } from "@/components/decks/test-summary";
+import { levelFromPoints, recordSession } from "@/lib/rewards";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/tts";
 import { useReducedMotionSafe } from "@/lib/hooks/use-reduced-motion";
-import { cn } from "@/lib/utils";
-import type { Course } from "@/types/decks";
-import { COUNTING_PROMPT, isCountingCard, type TestQuestion } from "@/lib/tests";
+import type { Deck, FlashCard } from "@/types/decks";
+import { decks } from "@/lib/data/decks";
 
-const POINTS_CORRECT = 10;
+type Phase = "test" | "summary";
+
+const POINTS_CORRECT = 15;
 const POINTS_STREAK_BONUS = 5;
-const POINTS_COMPLETION = 25;
-const POINTS_PERFECT = 50;
+const POINTS_COMPLETION = 30;
+const POINTS_PERFECT = 60;
+const STAR_EVERY = 3;
 
-/** Test grade: 3★ at 90%+, 2★ at 70%+, 1★ at 50%+. */
-function starsForScore(correct: number, total: number): number {
-  if (total === 0) return 0;
-  const accuracy = correct / total;
-  if (accuracy >= 0.9) return 3;
-  if (accuracy >= 0.7) return 2;
-  if (accuracy >= 0.5) return 1;
-  return 0;
+function hashCode(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return h;
 }
 
-const PROMPT = "Which one is this?";
-
-function promptFor(question: TestQuestion | undefined): string {
-  return question && isCountingCard(question.card) ? COUNTING_PROMPT : PROMPT;
+function mulberry32(seed: number): () => number {
+  let a = seed | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
-export function TestPlayer({ course, questions }: { course: Course; questions: TestQuestion[] }) {
+// Deterministic per seed so server and client render identical questions
+// (avoids hydration mismatches with Math.random()).
+function seededShuffle<T>(array: T[], rng: () => number): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+interface Question {
+  card: FlashCard;
+  promptText: string;
+  options: FlashCard[];
+}
+
+type TestLevel = 1 | 2 | 3;
+
+export function TestPlayer({ deck }: { deck: Deck }) {
   const reduceMotion = useReducedMotionSafe();
-  const total = questions.length;
 
-  const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [answered, setAnswered] = useState(false);
-  const [results, setResults] = useState<boolean[]>([]);
+  const [phase, setPhase] = useState<Phase>("test");
+  const [testLevel, setTestLevel] = useState<TestLevel>(2);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [results, setResults] = useState<Record<string, boolean>>({});
+
   const [streak, setStreak] = useState(0);
   const [points, setPoints] = useState(0);
-  const [phase, setPhase] = useState<"test" | "summary">("test");
-  const [newBadges, setNewBadges] = useState<string[]>([]);
-  const [announcement, setAnnouncement] = useState(
-    () => `Question 1 of ${total}. ${promptFor(questions[0])}`
-  );
+  const [sessionStars, setSessionStars] = useState(0);
   const [speaking, setSpeaking] = useState(false);
+  const [celebration, setCelebration] = useState<Celebration>(null);
+  const [newBadges, setNewBadges] = useState<string[]>([]);
+  const [floatPoints, setFloatPoints] = useState<{ id: number; text: string } | null>(null);
 
   const summarySaved = useRef(false);
+  const floatId = useRef(0);
+  const celebrationIdRef = useRef(0);
 
-  const rewards = useSyncExternalStore(
-    subscribeRewards,
-    getRewardsSnapshot,
-    getRewardsServerSnapshot
-  );
-  const level = levelFromPoints(rewards.points);
+  const questions: Question[] = useMemo(() => {
+    const allPoolCards = decks.flatMap((d) => d.cards);
+    const distractorCount = testLevel === 1 ? 1 : 3;
+    const targetCards = deck.cards.slice(0, 10);
 
-  const question = questions[index];
-  const questionPrompt = promptFor(question);
-  const questionVoice = question && isCountingCard(question.card) ? "counting" : "default";
-  const correctCount = results.filter(Boolean).length;
-
-  const ttsSupported = useSyncExternalStore(
-    () => () => {},
-    () => isTtsSupported(),
-    () => false
-  );
-
-  const speakText = useCallback((text: string, voice: "default" | "counting" = "default") => {
-    if (!isTtsSupported()) return;
-    setSpeaking(true);
-    speak(text, {
-      voice,
-      onStart: () => setSpeaking(true),
-      onEnd: () => setSpeaking(false),
-    });
-  }, []);
-
-  // Speak the prompt as each question appears — the picture is the question.
-  useEffect(() => {
-    if (phase !== "test" || !isTtsSupported()) return;
-    speak(questionPrompt, {
-      voice: questionVoice,
-      onStart: () => setSpeaking(true),
-      onEnd: () => setSpeaking(false),
-    });
-  }, [index, phase, questionPrompt, questionVoice]);
-
-  useEffect(() => () => stopSpeaking(), []);
-
-  const handleSelect = useCallback(
-    (option: string) => {
-      if (answered || !question || phase !== "test") return;
-      const isCorrect = option === question.card.front;
-      setSelected(option);
-      setAnswered(true);
-      setResults((prev) => [...prev, isCorrect]);
-      setAnnouncement(
-        isCorrect
-          ? `Correct! The answer is ${question.card.front}.`
-          : `Not quite. The answer is ${question.card.front}.`
+    return targetCards.map((targetCard, qi) => {
+      const rng = mulberry32(hashCode(`${deck.id}:${testLevel}:${qi}`));
+      const sameDeckPool = deck.cards.filter(
+        (c) => c.id !== targetCard.id && c.front !== targetCard.front
+      );
+      const allPool = allPoolCards.filter(
+        (c) => c.id !== targetCard.id && c.front !== targetCard.front
       );
 
-      if (isCorrect) {
-        const nextStreak = streak + 1;
-        const bonus = nextStreak % 3 === 0 ? POINTS_STREAK_BONUS : 0;
-        setStreak(nextStreak);
-        setPoints((p) => p + POINTS_CORRECT + bonus);
+      let distractorCards: FlashCard[];
+      if (testLevel === 3) {
+        const sameDeck = seededShuffle(sameDeckPool, rng);
+        const needed = distractorCount - sameDeck.length;
+        const others = seededShuffle(allPool, rng)
+          .filter((c) => !sameDeck.includes(c))
+          .slice(0, Math.max(0, needed));
+        distractorCards = [...sameDeck, ...others].slice(0, distractorCount);
       } else {
-        setStreak(0);
+        distractorCards = seededShuffle(allPool, rng).slice(0, distractorCount);
       }
-      speakText(question.card.front);
-    },
-    [answered, question, phase, streak, speakText]
-  );
 
-  const goNext = useCallback(() => {
-    if (!answered || phase !== "test") return;
+      const options = seededShuffle([targetCard, ...distractorCards], rng);
+      const promptText = `Which one is the ${targetCard.front}?`;
 
-    const nextIndex = index + 1;
-    if (nextIndex >= total) {
-      const finalCorrect = correctCount;
-      const finalPoints =
-        points + (finalCorrect === total ? POINTS_PERFECT : POINTS_COMPLETION);
-      setAnnouncement(
-        finalCorrect === total ? "Perfect test! You got everything right." : "Test complete!"
-      );
-      window.setTimeout(() => {
-        if (summarySaved.current) return;
+      return { card: targetCard, promptText, options };
+    });
+  }, [deck.cards, deck.id, testLevel]);
+
+  const currentQ = questions[questionIndex] ?? questions[0];
+  const total = questions.length;
+  const correctCount = Object.values(results).filter(Boolean).length;
+  const level = levelFromPoints(points);
+
+  const speakPrompt = useCallback(() => {
+    if (!isTtsSupported()) return;
+    speak(currentQ.promptText, {
+      onStart: () => setSpeaking(true),
+      onEnd: () => setSpeaking(false),
+    });
+  }, [currentQ.promptText]);
+
+  useEffect(() => {
+    if (phase !== "test") return;
+    speakPrompt();
+    return () => stopSpeaking();
+  }, [questionIndex, phase, speakPrompt]);
+
+  const handleSelectOption = (option: FlashCard) => {
+    if (isAnswered) return;
+
+    setSelectedOptionId(option.id);
+    setIsAnswered(true);
+
+    const isCorrect = option.id === currentQ.card.id;
+    setResults((prev) => ({ ...prev, [currentQ.card.id]: isCorrect }));
+
+    if (isCorrect) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      const bonus = newStreak % STAR_EVERY === 0 ? POINTS_STREAK_BONUS : 0;
+      const earned = POINTS_CORRECT + bonus;
+      const newPoints = points + earned;
+      setPoints(newPoints);
+
+      if (newStreak % STAR_EVERY === 0) {
+        const newStars = sessionStars + 1;
+        setSessionStars(newStars);
+        const celebrationId = ++celebrationIdRef.current;
+        setCelebration({ kind: "star", id: celebrationId });
+        setTimeout(() => setCelebration((c) => (c?.id === celebrationId ? null : c)), 1800);
+      }
+
+      setFloatPoints({ id: ++floatId.current, text: `+${earned}` });
+      setTimeout(() => setFloatPoints(null), 900);
+
+      speak("Correct! Great job!", {
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
+    } else {
+      setStreak(0);
+      speak(`Incorrect. The correct answer is ${currentQ.card.front}`, {
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (questionIndex >= total - 1) {
+      let finalPoints = points;
+      if (correctCount === total) {
+        finalPoints += POINTS_PERFECT;
+      } else {
+        finalPoints += POINTS_COMPLETION;
+      }
+      setPoints(finalPoints);
+
+      if (!summarySaved.current) {
         summarySaved.current = true;
         const { newBadges: badges } = recordSession(
           {
-            kind: "test",
-            deckId: `test:${course.id}`,
-            deckTitle: `${course.title} Test`,
-            courseId: course.id,
-            correct: finalCorrect,
+            deckId: deck.id,
+            deckTitle: deck.title,
+            correct: correctCount,
             total,
-            stars: starsForScore(finalCorrect, total),
+            stars: sessionStars,
             points: finalPoints,
             date: new Date().toISOString(),
           },
           streak
         );
         setNewBadges(badges.map((b) => b.label));
-        setPhase("summary");
-      }, 500);
+      }
+      setPhase("summary");
     } else {
-      setIndex(nextIndex);
-      setSelected(null);
-      setAnswered(false);
-      setAnnouncement(`Question ${nextIndex + 1} of ${total}. ${promptFor(questions[nextIndex])}`);
+      setQuestionIndex((i) => i + 1);
+      setSelectedOptionId(null);
+      setIsAnswered(false);
     }
-  }, [answered, phase, index, total, correctCount, points, streak, course.id, course.title, questions]);
+  };
 
-  const restart = useCallback(() => {
+  const restartTest = () => {
     summarySaved.current = false;
-    setIndex(0);
-    setSelected(null);
-    setAnswered(false);
-    setResults([]);
+    setQuestionIndex(0);
+    setSelectedOptionId(null);
+    setIsAnswered(false);
+    setResults({});
     setStreak(0);
     setPoints(0);
+    setSessionStars(0);
     setNewBadges([]);
     setPhase("test");
-    setAnnouncement(`Question 1 of ${total}. ${promptFor(questions[0])}`);
-  }, [total, questions]);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.repeat) return;
-      if (phase !== "test" || !question) return;
-      const num = Number(e.key);
-      if (Number.isInteger(num) && num >= 1 && num <= question.options.length) {
-        handleSelect(question.options[num - 1]);
-      } else if ((e.key === "Enter" || e.key === "ArrowRight") && answered) {
-        goNext();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [phase, question, answered, handleSelect, goNext]);
-
-  if (total === 0) {
-    return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 text-center">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          No test available yet
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          This course does not have any testable content.
-        </p>
-        <Link
-          href={`/courses/${course.id}`}
-          className={cn(buttonVariants(), "mt-6 min-h-11")}
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Back to course
-        </Link>
-      </main>
-    );
-  }
+  };
 
   if (phase === "summary") {
-    const accuracy = Math.round((correctCount / total) * 100);
-    const stars = starsForScore(correctCount, total);
-    const finalPoints = points + (correctCount === total ? POINTS_PERFECT : POINTS_COMPLETION);
-
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6">
-        <div className="text-center">
-          <motion.div
-            initial={reduceMotion ? false : { scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 18 }}
-          >
-            <Trophy className="mx-auto size-14 text-yellow-500" aria-hidden="true" />
-          </motion.div>
-          <h1 className="font-heading mt-4 text-3xl font-semibold tracking-tight">
-            Great job, {course.title}!
-          </h1>
-          <p className="mt-2 text-muted-foreground" id="test-summary-description">
-            You got {correctCount} out of {total} correct in the test.
-          </p>
-
-          <div
-            className="mt-6 flex items-center justify-center gap-1"
-            role="img"
-            aria-label={`${stars} of 3 stars earned`}
-          >
-            {[1, 2, 3].map((n) => (
-              <Star
-                key={n}
-                className={cn(
-                  "size-10",
-                  n <= stars ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground/25"
-                )}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {stars} of 3 stars earned
-          </p>
-
-          <div className="mx-auto mt-8 grid max-w-md grid-cols-3 gap-3">
-            <Stat label="Points" value={String(finalPoints)} icon={<Zap className="size-5 text-yellow-500" aria-hidden="true" />} />
-            <Stat label="Stars" value={String(stars)} icon={<Star className="size-5 fill-yellow-400 text-yellow-500" aria-hidden="true" />} />
-            <Stat label="Accuracy" value={`${accuracy}%`} icon={<Check className="size-5 text-green-600" aria-hidden="true" />} />
-          </div>
-
-          <div
-            className="mx-auto mt-8 flex max-w-md items-center gap-4 rounded-xl border p-4"
-            role="img"
-            aria-label={`Level ${level.level}, ${level.title}. ${level.nextTitle ? `${level.pointsForNext} points to ${level.nextTitle}.` : "Maximum level reached!"}`}
-          >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-              {level.level}
-            </span>
-            <div className="min-w-0 flex-1 text-left">
-              <p className="font-medium">{level.title}</p>
-              {level.nextTitle ? (
-                <>
-                  <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all duration-700"
-                      style={{ width: `${Math.round(level.progress * 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {level.pointsForNext} points to {level.nextTitle}
-                  </p>
-                </>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Maximum level reached — incredible!
-                </p>
-              )}
-            </div>
-          </div>
-
-          {newBadges.length > 0 ? (
-            <div className="mt-6 rounded-xl border border-yellow-300 bg-yellow-50 p-4 dark:bg-yellow-500/10">
-              <p className="flex items-center justify-center gap-2 font-medium">
-                <Star className="size-5 text-yellow-500" aria-hidden="true" />
-                New badge{newBadges.length > 1 ? "s" : ""} earned!
-              </p>
-              <ul className="mt-2 flex flex-wrap justify-center gap-2">
-                {newBadges.map((label) => (
-                  <Badge key={label} className="bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300">
-                    {label}
-                  </Badge>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={restart}
-              className={cn(buttonVariants({ size: "lg" }), "min-h-12 w-full px-8 text-base sm:w-auto")}
-            >
-              <Check className="size-5" aria-hidden="true" />
-              Take Test Again
-            </button>
-            <Link
-              href={`/courses/${course.id}`}
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-12 w-full px-8 text-base sm:w-auto")}
-            >
-              <ArrowLeft className="size-5" aria-hidden="true" />
-              Back to Course
-            </Link>
-          </div>
-        </div>
-      </main>
+      <TestSummary
+        deck={deck}
+        correctCount={correctCount}
+        total={total}
+        points={points}
+        sessionStars={sessionStars}
+        level={level}
+        newBadges={newBadges}
+        reduceMotion={reduceMotion}
+        onRestart={restartTest}
+      />
     );
   }
 
+  const progressPct = Math.round(((questionIndex + 1) / total) * 100);
+
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:px-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6 sm:px-6">
+      {/* Header & Difficulty Selector */}
       <div className="flex items-center justify-between gap-3">
         <Link
-          href={`/courses/${course.id}`}
+          href={`/decks/${deck.id}`}
           aria-label="Exit test"
-          className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
         >
           <X className="size-5" aria-hidden="true" />
           Exit
         </Link>
-        <p className="text-sm font-medium" aria-hidden="true">
-          Question {index + 1} of {total}
-        </p>
-        <p
-          className="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-4 text-sm font-bold text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300"
-          aria-label={`${rewards.stars} stars in total`}
-        >
+
+        {/* 3 Difficulty Level Selector */}
+        <div className="flex items-center gap-1 rounded-full border border-border/80 bg-muted/50 p-1">
+          <button
+            type="button"
+            onClick={() => { setTestLevel(1); setQuestionIndex(0); setIsAnswered(false); }}
+            className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${testLevel === 1 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Easy · 2 Choices
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTestLevel(2); setQuestionIndex(0); setIsAnswered(false); }}
+            className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${testLevel === 2 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Medium · 4 Choices
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTestLevel(3); setQuestionIndex(0); setIsAnswered(false); }}
+            className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${testLevel === 3 ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Hard · Similar Pictures
+          </button>
+        </div>
+
+        <p className="flex min-h-11 items-center gap-1.5 rounded-full bg-yellow-100 px-4 text-sm font-bold text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300">
           <Star className="size-4 fill-current" aria-hidden="true" />
-          {rewards.stars}
+          {sessionStars}
         </p>
       </div>
 
+      {/* Progress Bar */}
       <div
-        className="mt-4 h-3 w-full overflow-hidden rounded-full bg-muted"
+        className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted"
         role="progressbar"
-        aria-valuemin={0}
+        aria-valuemin={1}
         aria-valuemax={total}
-        aria-valuenow={results.length}
-        aria-label="Test progress"
+        aria-valuenow={questionIndex + 1}
       >
         <motion.div
-          className="h-full rounded-full bg-primary"
-          animate={{ width: `${Math.round((results.length / total) * 100)}%` }}
-          transition={reduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
+          className="h-full rounded-full bg-emerald-600"
+          animate={{ width: `${progressPct}%` }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
         />
       </div>
 
+      {/* Level & Points Bar */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <p className="inline-flex items-center gap-1.5 font-medium">
           <Trophy className="size-4 text-yellow-500" aria-hidden="true" />
           Lv {level.level} · {level.title}
         </p>
-        <p className="inline-flex items-center gap-1.5 font-medium" aria-label={`${points} points this test`}>
+        <p className="inline-flex items-center gap-1.5 font-medium">
           <Zap className="size-4 text-yellow-500" aria-hidden="true" />
           {points} pts
+          {streak >= 2 ? (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+              <Flame className="size-3.5" aria-hidden="true" />
+              {streak}
+            </span>
+          ) : null}
         </p>
       </div>
 
-      <div className="mt-6 flex min-h-0 flex-1 flex-col items-center justify-center">
-        <div className="w-full max-w-md text-center">
-          <p
-            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-            id={`test-question-${index}`}
-          >
-            {questionPrompt}
-          </p>
-          <div
-            className="mt-4 flex min-h-56 items-center justify-center rounded-3xl border bg-card p-6 shadow-sm"
-            style={{ borderTop: `6px solid ${course.accent}` }}
-          >
-            <CardVisual image={question.card.image} />
-          </div>
+      {/* Question Prompt */}
+      <div className="mt-6 flex flex-col items-center text-center">
+        <div className="flex items-center gap-3">
+          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            {currentQ.promptText}
+          </h2>
           <button
             type="button"
-            onClick={() => speakText(questionPrompt, questionVoice)}
-            aria-label="Hear the question"
-            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border bg-background px-5 text-sm font-medium hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+            onClick={speakPrompt}
+            aria-label="Listen to prompt"
+            className="inline-flex size-11 items-center justify-center rounded-full border bg-background text-foreground shadow-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
           >
             {speaking ? (
-              <span className="flex items-end gap-0.5" aria-hidden="true">
+              <motion.span
+                className="flex items-end gap-0.5"
+                animate={reduceMotion ? {} : { opacity: [1, 0.4, 1] }}
+                transition={{ duration: 0.6, repeat: Infinity }}
+                aria-hidden="true"
+              >
                 {[0, 1, 2].map((i) => (
                   <motion.span
                     key={i}
@@ -418,99 +343,110 @@ export function TestPlayer({ course, questions }: { course: Course; questions: T
                     transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }}
                   />
                 ))}
-              </span>
+              </motion.span>
             ) : (
-              <Volume2 className="size-4" aria-hidden="true" />
+              <Volume2 className="size-5" aria-hidden="true" />
             )}
-            {ttsSupported ? "Listen" : "Audio not available"}
           </button>
         </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Question {questionIndex + 1} of {total} — Tap the correct picture below
+        </p>
+      </div>
 
-        <div
-          className="mt-6 grid w-full max-w-md grid-cols-2 gap-3"
-          role="radiogroup"
-          aria-labelledby={`test-question-${index}`}
+      {/* 4 Pictorial Options Grid */}
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6">
+        {currentQ.options.map((option) => {
+          const isSelected = selectedOptionId === option.id;
+          const isCorrect = option.id === currentQ.card.id;
+
+          let cardStyle =
+            "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg hover:scale-[1.02]";
+          if (isAnswered) {
+            if (isCorrect) {
+              cardStyle =
+                "border-4 border-green-500 bg-gradient-to-b from-green-500/10 to-green-500/20 shadow-lg shadow-green-500/20 scale-[1.02]";
+            } else if (isSelected) {
+              cardStyle =
+                "border-4 border-red-500 bg-gradient-to-b from-red-500/10 to-red-500/20 shadow-lg shadow-red-500/20 scale-[0.98]";
+            } else {
+              cardStyle = "border border-border/30 opacity-40 bg-card/50 scale-[0.96]";
+            }
+          }
+
+          return (
+            <button
+              key={option.id}
+              id={`test-option-${option.id}`}
+              type="button"
+              disabled={isAnswered}
+              onClick={() => handleSelectOption(option)}
+              aria-label={`Option: ${option.front}`}
+              className={`relative flex aspect-[4/3] flex-col items-center justify-center rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+            >
+              <div className="flex size-full items-center justify-center drop-shadow-sm">
+                <CardVisual image={option.image} />
+              </div>
+
+              {isAnswered && isCorrect ? (
+                <CheckCircle2 className="absolute right-3.5 top-3.5 size-8 text-green-500 drop-shadow-md animate-bounce" />
+              ) : null}
+              {isAnswered && isSelected && !isCorrect ? (
+                <XCircle className="absolute right-3.5 top-3.5 size-8 text-red-500 drop-shadow-md" />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Next Question Control & Correct Answer Callout */}
+      {isAnswered ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 flex flex-col items-center gap-4"
         >
-          {question.options.map((option, i) => {
-            const isCorrectOption = option === question.card.front;
-            const isSelected = option === selected;
-            const showCorrect = answered && isCorrectOption;
-            const showWrong = answered && isSelected && !isCorrectOption;
-            return (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                disabled={answered}
-                onClick={() => handleSelect(option)}
-                className={cn(
-                  "inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl border-2 bg-card px-4 text-center text-lg font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none",
-                  showCorrect && "border-green-500 bg-green-50 text-green-800 dark:bg-green-500/10 dark:text-green-300",
-                  showWrong && "border-red-500 bg-red-50 text-red-800 dark:bg-red-500/10 dark:text-red-300",
-                  !answered && "cursor-pointer hover:bg-muted",
-                  answered && !showCorrect && !showWrong && "opacity-60"
-                )}
-              >
-                <span className="text-sm font-bold text-muted-foreground" aria-hidden="true">
-                  {i + 1}
-                </span>
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+          {selectedOptionId !== currentQ.card.id ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-6 py-3 text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-300">
+              <span className="text-xl">💡</span>
+              <p className="text-sm font-semibold">
+                Correct Answer: <span className="underline">{currentQ.card.front}</span> ({currentQ.card.back ?? "shown above"})
+              </p>
+            </div>
+          ) : null}
 
-      <div className="mt-6 flex items-center justify-end">
-        {answered ? (
-          index >= total - 1 ? (
-            <button
-              type="button"
-              onClick={goNext}
-              className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8")}
-            >
-              <Check className="size-5" aria-hidden="true" />
-              Finish Test
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={goNext}
-              className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8")}
-            >
-              Next Question
-              <ChevronRight className="size-5" aria-hidden="true" />
-            </button>
-          )
+          <button
+            type="button"
+            onClick={handleNextQuestion}
+            className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+          >
+            {questionIndex >= total - 1 ? "Complete Test & View Results" : "Next Question"}
+            <ArrowRight className="size-5" />
+          </button>
+        </motion.div>
+      ) : null}
+
+      <AnimatePresence>
+        {floatPoints ? (
+          <motion.p
+            key={floatPoints.id}
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 0, scale: 0.6 }}
+            animate={{ opacity: 1, y: -24, scale: 1.15 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="pointer-events-none fixed left-1/2 top-1/3 z-50 text-3xl font-bold text-green-600"
+          >
+            {floatPoints.text}
+          </motion.p>
         ) : null}
-      </div>
+      </AnimatePresence>
 
-      <p className="mt-4 text-center text-xs text-muted-foreground" aria-hidden="true">
-        Keys: 1–4 choose · Enter next
-      </p>
-
-      <div className="sr-only" role="status" aria-live="polite">
-        {announcement}
-      </div>
+      <CelebrationOverlay
+        celebration={celebration}
+        level={level}
+        isRewardDeck={deck.category === "reinforcement"}
+        reduceMotion={reduceMotion}
+      />
     </main>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1 rounded-xl border p-3">
-      {icon}
-      <span className="text-xl font-bold">{value}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </div>
   );
 }

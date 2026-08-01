@@ -4,6 +4,7 @@
  * All settings are persisted to localStorage under a single key so the
  * provider can restore them before first paint (see the inline script in
  * `app/layout.tsx`) — no flash of the wrong mode.
+ * end
  */
 
 export const ACCESSIBILITY_STORAGE_KEY = "flashability:accessibility";
