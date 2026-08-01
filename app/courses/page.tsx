@@ -60,7 +60,7 @@ export default function CoursesPage() {
                 className="group/course block h-full rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
                 aria-label={`${course.title} course, ${decksInCourse.length} lessons`}
               >
-                <Card className="h-full overflow-hidden transition-all duration-300 group-hover/course:-translate-y-1 group-hover/course:shadow-lg group-hover/course:shadow-foreground/5">
+                <Card className="h-full overflow-hidden transition-shadow duration-300 group-hover/course:shadow-lg group-hover/course:shadow-foreground/5">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-3">
                       <span

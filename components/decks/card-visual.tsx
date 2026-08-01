@@ -23,13 +23,56 @@ function splitEmojis(value: string): string[] {
   return [...graphemeSplit.segment(value)].map((s) => s.segment);
 }
 
-export function CardVisual({ image }: { image?: FlashCardImage }) {
+type CardSize = "sm" | "md" | "lg";
+
+const SIZES: Record<CardSize, {
+  url: string;
+  numeral: string;
+  shape: string;
+  emojiOne: string;
+  emojiMany: string;
+  icon: string;
+}> = {
+  sm: {
+    url: "size-20 sm:size-24",
+    numeral: "text-5xl sm:text-6xl",
+    shape: "size-20 sm:size-24",
+    emojiOne: "text-5xl",
+    emojiMany: "text-4xl sm:text-5xl",
+    icon: "size-20 sm:size-24",
+  },
+  md: {
+    url: "size-32 sm:size-36",
+    numeral: "text-6xl sm:text-7xl",
+    shape: "size-24 sm:size-28",
+    emojiOne: "text-6xl",
+    emojiMany: "text-4xl sm:text-5xl",
+    icon: "size-24 sm:size-28",
+  },
+  lg: {
+    url: "size-40 sm:size-48",
+    numeral: "text-8xl sm:text-9xl",
+    shape: "size-28 sm:size-32",
+    emojiOne: "text-8xl",
+    emojiMany: "text-5xl sm:text-6xl",
+    icon: "size-28 sm:size-32",
+  },
+};
+
+export function CardVisual({
+  image,
+  size = "lg",
+}: {
+  image?: FlashCardImage;
+  size?: CardSize;
+}) {
   if (!image) return null;
+  const s = SIZES[size];
 
   switch (image.type) {
     case "url":
       return (
-        <span className="relative block size-40 sm:size-48">
+        <span className={`relative block ${s.url}`}>
           <Image
             src={image.value}
             alt=""
@@ -42,14 +85,14 @@ export function CardVisual({ image }: { image?: FlashCardImage }) {
       );
     case "numeral":
       return (
-        <span className="text-8xl font-black leading-none sm:text-9xl">
+        <span className={`${s.numeral} font-black leading-none`}>
           {image.value}
         </span>
       );
     case "colour":
       return (
         <span
-          className="block size-24 rounded-2xl border-4 shadow-sm"
+          className={`block ${s.shape} rounded-2xl border-4 shadow-sm`}
           style={{ backgroundColor: image.value }}
           aria-hidden="true"
         />
@@ -58,7 +101,7 @@ export function CardVisual({ image }: { image?: FlashCardImage }) {
       return (
         <svg
           viewBox="0 0 100 100"
-          className="size-28 fill-current sm:size-32"
+          className={`${s.shape} fill-current`}
           aria-hidden="true"
         >
           {SHAPE_PATHS[image.value]}
@@ -69,7 +112,7 @@ export function CardVisual({ image }: { image?: FlashCardImage }) {
       return (
         <span className="flex max-w-full flex-wrap items-center justify-center gap-1.5 leading-none sm:gap-2" aria-hidden="true">
           {parts.map((e, i) => (
-            <span key={i} className={parts.length === 1 ? "text-8xl" : "text-5xl sm:text-6xl"}>
+            <span key={i} className={parts.length === 1 ? s.emojiOne : s.emojiMany}>
               {e}
             </span>
           ))}
@@ -77,6 +120,6 @@ export function CardVisual({ image }: { image?: FlashCardImage }) {
       );
     }
     case "icon":
-      return <CardIcon name={image.value} className="size-28 sm:size-32" />;
+      return <CardIcon name={image.value} className={s.icon} />;
   }
 }

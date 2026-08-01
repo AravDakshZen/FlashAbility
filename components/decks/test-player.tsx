@@ -520,13 +520,13 @@ export function TestPlayer({ deck }: { deck: Deck }) {
 
       {/* Options Grid */}
       {currentQ.mode === "count" ? (
-        <div className="mt-3 grid min-h-0 flex-1 auto-rows-fr grid-cols-2 gap-3">
+        <div className="mt-3 grid min-h-0 flex-1 auto-rows-[minmax(96px,1fr)] grid-cols-2 gap-3">
           {currentQ.options.map((option) => {
             const isSelected = selectedOptionId === option.id;
             const isCorrect = option.id === `count:${currentQ.count}`;
 
             let cardStyle =
-              "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg hover:scale-[1.02]";
+              "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg";
             if (isAnswered) {
               if (isCorrect) {
                 cardStyle =
@@ -548,7 +548,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
                 disabled={isAnswered}
                 onClick={() => handleSelectOption(option.id)}
                 aria-label={`Option: ${option.number}`}
-                className={`relative flex min-h-0 flex-col items-center justify-center gap-1 rounded-3xl p-3 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+                className={`relative flex min-h-0 flex-col items-center justify-center rounded-3xl p-3 shadow-sm backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-200 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
               >
                 <span className="text-6xl font-black leading-none sm:text-7xl">
                   {option.number}
@@ -568,13 +568,13 @@ export function TestPlayer({ deck }: { deck: Deck }) {
           })}
         </div>
       ) : (
-        <div className="mt-3 grid min-h-0 flex-1 auto-rows-fr grid-cols-2 gap-3">
+        <div className="mt-3 grid min-h-0 flex-1 auto-rows-[minmax(96px,1fr)] grid-cols-2 gap-3">
           {currentQ.options.map((option) => {
             const isSelected = selectedOptionId === option.id;
             const isCorrect = option.id === currentQ.card.id;
 
             let cardStyle =
-              "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg hover:scale-[1.02]";
+              "border-2 border-border/60 bg-gradient-to-b from-card to-muted/40 hover:border-primary/60 hover:shadow-lg";
             if (isAnswered) {
               if (isCorrect) {
                 cardStyle =
@@ -596,10 +596,10 @@ export function TestPlayer({ deck }: { deck: Deck }) {
                 disabled={isAnswered}
                 onClick={() => handleSelectOption(option.id)}
                 aria-label={`Option: ${option.front}`}
-                className={`relative flex min-h-0 flex-col items-center justify-center rounded-3xl p-3 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+                className={`relative flex min-h-0 flex-col items-center justify-center rounded-3xl p-3 shadow-sm backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-200 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
               >
                 <div className="flex min-h-0 items-center justify-center drop-shadow-sm">
-                  <CardVisual image={option.image} />
+                  <CardVisual image={option.image} size="md" />
                 </div>
 
                 {isAnswered && isCorrect ? (
