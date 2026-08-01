@@ -34,7 +34,6 @@ function GoogleIcon({ className }: { className?: string }) {
 
 type LoadingState = "google" | "guest" | null;
 
-/** Google OAuth + Continue-as-Guest actions, shown above the email form. */
 export function SocialAuth() {
   const [loading, setLoading] = useState<LoadingState>(null);
 

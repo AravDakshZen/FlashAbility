@@ -23,7 +23,6 @@ function isSection(link: NavLink): link is { label: string; children: readonly N
   return "children" in link;
 }
 
-/** Mobile slide-in navigation shown below the `md` breakpoint. */
 export function MobileNav({
   links,
   user,

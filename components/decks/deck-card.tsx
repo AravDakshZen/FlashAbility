@@ -42,10 +42,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Speech,
 };
 
-/**
- * Deck card used across the library, course pages, and dashboard.
- * Server-component safe — no client hooks.
- */
 export function DeckCard({
   deck,
   className,

@@ -40,7 +40,6 @@ async function setDemoCookie(): Promise<void> {
   });
 }
 
-/** Login with email + password. On success the session cookie is set and the user is redirected. */
 export async function login(
   _prevState: AuthState,
   formData: FormData
@@ -76,7 +75,6 @@ export async function login(
   redirect(next.startsWith("/") ? next : "/dashboard");
 }
 
-/** Signup with email + password + confirm. Requires email confirmation unless disabled on the project. */
 export async function signup(
   _prevState: AuthState,
   formData: FormData
@@ -117,7 +115,6 @@ export async function signup(
   };
 }
 
-/** Sends a password-reset email. */
 export async function forgotPassword(
   _prevState: AuthState,
   formData: FormData
@@ -146,7 +143,6 @@ export async function forgotPassword(
   };
 }
 
-/** Signs the user out and redirects to the landing page. */
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(DEMO_COOKIE);
@@ -165,7 +161,6 @@ export async function continueAsGuest(): Promise<AuthState> {
   return { success: true };
 }
 
-/** Sets a new password from the recovery flow (user arrived via reset email). */
 export async function resetPassword(
   _prevState: AuthState,
   formData: FormData
@@ -191,7 +186,6 @@ export async function resetPassword(
   return { success: true, message: "Password updated. Please log in." };
 }
 
-/** Returns the Supabase OAuth URL for Google — the client navigates to it. */
 export async function signInWithGoogle(): Promise<{ url: string | null }> {
   const supabase = await createClient();
 

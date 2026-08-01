@@ -4,7 +4,6 @@ import { useSyncExternalStore } from "react";
 
 import { getRewardsServerSnapshot, getRewardsSnapshot, subscribeRewards } from "@/lib/rewards";
 
-/** Aggregate progress across a course's lessons (reads the rewards store). */
 export function CourseProgress({ deckIds }: { deckIds: string[] }) {
   const state = useSyncExternalStore(
     subscribeRewards,

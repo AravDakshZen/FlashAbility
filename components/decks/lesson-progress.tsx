@@ -5,7 +5,6 @@ import { CheckCircle2, Circle } from "lucide-react";
 
 import { getRewardsServerSnapshot, getRewardsSnapshot, subscribeRewards } from "@/lib/rewards";
 
-/** Per-lesson progress widget for course pages (reads the rewards store). */
 export function LessonProgress({ deckId }: { deckId: string }) {
   const state = useSyncExternalStore(
     subscribeRewards,

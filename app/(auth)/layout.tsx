@@ -9,10 +9,6 @@ const highlights = [
   "Multilingual and e-paper ready",
 ];
 
-/**
- * Shared split layout for all auth pages: branding panel on the left
- * (desktop only), the auth card on the right.
- */
 export default function AuthLayout({
   children,
 }: {

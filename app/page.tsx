@@ -129,7 +129,6 @@ export default function HomePage() {
     <>
       <SiteHeader />
       <main id="main" className="flex-1">
-        {/* Hero */}
         <section className="relative overflow-hidden">
           <div
             aria-hidden="true"
@@ -176,7 +175,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Features */}
         <section id="features" className="border-t bg-muted/40 py-16 sm:py-24">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
             <Reveal>
@@ -213,7 +211,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Why e-Flash Cards */}
         <section id="why" className="py-16 sm:py-24">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
             <Reveal>
@@ -246,7 +243,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Accessibility */}
         <section
           id="accessibility"
           className="border-t bg-muted/40 py-16 sm:py-24"
@@ -303,7 +299,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* About */}
         <section id="about" className="py-16 sm:py-24">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
@@ -329,7 +324,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Contact */}
         <section id="contact" className="border-t bg-muted/40 py-16 sm:py-24">
           <div className="mx-auto w-full max-w-6xl px-4 text-center sm:px-6 lg:px-8">
             <Reveal>

@@ -4,15 +4,10 @@ import { cn } from "@/lib/utils";
 type LogoProps = {
   href?: string;
   variant?: "default" | "inverted";
-  /** Shows the tagline beneath the wordmark (main header layout). */
   tagline?: boolean;
   className?: string;
 };
 
-/**
- * FlashAbility wordmark — monochrome "F" tile + name.
- * Server-component safe.
- */
 export function Logo({
   href = "/",
   variant = "default",

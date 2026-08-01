@@ -38,7 +38,6 @@ export interface FlashCard {
   id: string;
   /** Word/phrase shown on the front — TTS reads this aloud. */
   front: string;
-  /** Prompt shown after flipping the card. */
   back?: string;
   image?: FlashCardImage;
   /** Optional audio URL override; otherwise the front text is spoken via TTS. */
@@ -55,7 +54,6 @@ export interface Deck {
   /** Hex accent color used for UI tinting, e.g. "#f97316". */
   accent: string;
   targetAge?: string;
-  /** Short clinician note. */
   hint?: string;
   cards: FlashCard[];
 }
@@ -67,7 +65,6 @@ export interface Course {
   description: string;
   icon: string;
   accent: string;
-  /** Decks belong to a course as lessons, in order. */
   deckIds: string[];
 }
 
@@ -112,7 +109,6 @@ export const DECK_CATEGORY_META: Record<
   },
 };
 
-/** Badge displayed on deck/course cards. */
 export function categoryLabel(category: DeckCategory): string {
   return DECK_CATEGORY_META[category].label;
 }

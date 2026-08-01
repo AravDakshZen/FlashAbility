@@ -11,7 +11,6 @@ type RevealProps = {
   delay?: number;
 };
 
-/** Subtle fade-up on scroll. Renders a plain div when reduced motion is preferred. */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const reduce = useReducedMotionSafe();
 

@@ -18,7 +18,6 @@ import { logout } from "@/services/auth-service";
 import type { SessionUser } from "@/types/auth";
 import { cn } from "@/lib/utils";
 
-/** Avatar dropdown shown in the site header when a user is signed in. */
 export function UserMenu({
   user,
   className,

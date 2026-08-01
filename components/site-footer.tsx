@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { footerLinks, siteConfig } from "@/lib/constants";
 
-/** Minimal site-wide footer. */
 export function SiteFooter() {
   return (
     <footer className="border-t bg-background">

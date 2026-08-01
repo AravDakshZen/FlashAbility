@@ -38,7 +38,6 @@ import { cn } from "@/lib/utils";
 const TEXT_SIZES: readonly TextSize[] = ["sm", "base", "lg", "xl"];
 const SPEECH_RATES: readonly SpeechRate[] = ["slow", "normal", "fast"];
 
-/** Announces status changes to assistive technology. */
 function useAnnouncer() {
   const ref = useRef<HTMLParagraphElement>(null);
   const announce = useCallback((message: string) => {
@@ -47,16 +46,10 @@ function useAnnouncer() {
   return { ref, announce };
 }
 
-/**
- * Accessibility dropdown — every toggle writes real settings through the
- * shared AccessibilityProvider (same state as the learn-player menu), and
- * the provider persists them to localStorage.
- */
 export function AccessibilityMenu({
   variant = "main",
   className,
 }: {
-  /** "utility" renders a compact light trigger for the black utility bar. */
   variant?: "utility" | "main" | "floating";
   className?: string;
 }) {

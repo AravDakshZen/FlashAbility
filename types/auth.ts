@@ -1,12 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
-/**
- * Shared auth types used across server actions, forms, and providers.
- */
-
 /** Result of an auth server action, consumed by `useActionState`. */
 export type AuthState = {
-  /** Field-level validation errors, keyed by form field name. */
   errors?: {
     email?: string;
     password?: string;
@@ -14,9 +9,7 @@ export type AuthState = {
     /** Form-level error (e.g. wrong credentials, rate limit). */
     form?: string;
   };
-  /** Whether the action succeeded. `true` triggers a redirect / success UI. */
   success?: boolean;
-  /** Transient message for the success toast. */
   message?: string;
 };
 
@@ -43,7 +36,6 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
     "New sign-ups are currently disabled.",
 };
 
-/** Maps a raw Supabase error message to a friendly, user-safe message. */
 export function toAuthErrorMessage(raw: string): string {
   return AUTH_ERROR_MESSAGES[raw] ?? raw;
 }

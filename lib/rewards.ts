@@ -40,12 +40,10 @@ const EMPTY_STATE: RewardState = {
   badges: [],
 };
 
-/** Server-safe snapshot (empty state) for useSyncExternalStore SSR. */
 export function getRewardsServerSnapshot(): RewardState {
   return EMPTY_STATE;
 }
 
-/** External-store plumbing so client components can react to reward changes. */
 const listeners = new Set<() => void>();
 
 export function subscribeRewards(listener: () => void): () => void {
@@ -57,7 +55,6 @@ export function subscribeRewards(listener: () => void): () => void {
 
 let snapshot: RewardState | null = null;
 
-/** Cached snapshot for useSyncExternalStore — stable object identity. */
 export function getRewardsSnapshot(): RewardState {
   if (!snapshot) snapshot = loadRewards();
   return snapshot;
@@ -92,27 +89,6 @@ function persist(state: RewardState): RewardState {
   return state;
 }
 
-export function addStars(n: number): RewardState {
-  const state = loadRewards();
-  state.stars = Math.max(0, state.stars + n);
-  return persist(state);
-}
-
-export function addPoints(n: number): RewardState {
-  const state = loadRewards();
-  state.points = Math.max(0, state.points + n);
-  return persist(state);
-}
-
-export function loadStars(): number {
-  return loadRewards().stars;
-}
-
-export function loadPoints(): number {
-  return loadRewards().points;
-}
-
-/** Point thresholds and titles for learner levels. */
 const LEVELS = [
   { min: 0, title: "Star Learner" },
   { min: 200, title: "Word Explorer" },
@@ -128,7 +104,7 @@ export interface LevelInfo {
   nextTitle: string | null;
   pointsIntoLevel: number;
   pointsForNext: number | null;
-  progress: number; // 0..1
+  progress: number;
 }
 
 export function levelFromPoints(points: number): LevelInfo {
@@ -169,7 +145,6 @@ const BADGE_DEFS = [
 
 export type BadgeId = (typeof BADGE_DEFS)[number]["id"];
 
-/** Re-evaluates badges after a session; returns newly earned badges. */
 export function recordSession(
   record: SessionRecord,
   bestStreak: number

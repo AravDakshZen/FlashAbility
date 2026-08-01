@@ -44,7 +44,6 @@ export function pickVoice(lang?: string): SpeechSynthesisVoice | null {
   return voices[0] ?? null;
 }
 
-/** Speaks `text`. Cancels any utterance currently playing. */
 export function speak(text: string, opts: SpeakOptions = {}): void {
   if (!isTtsSupported() || !text) return;
 

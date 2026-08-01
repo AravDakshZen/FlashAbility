@@ -25,6 +25,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Code missing or exchange failed — send back to login.
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }

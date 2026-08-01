@@ -12,17 +12,11 @@ export type TextSize = "sm" | "base" | "lg" | "xl";
 export type SpeechRate = "slow" | "normal" | "fast";
 
 export interface AccessibilitySettings {
-  /** Text size scale applied to the whole app. */
   textSize: TextSize;
-  /** Stronger contrast for low-vision users (adds `high-contrast` class). */
   highContrast: boolean;
-  /** Dyslexia-friendly font + spacing (adds `dyslexia` class). */
   dyslexiaMode: boolean;
-  /** Forces reduced motion even when the OS prefers animation. */
   reduceMotion: boolean;
-  /** Speech synthesis rate for the card play button. */
   speechRate: SpeechRate;
-  /** Automatically read the card aloud when it becomes visible. */
   autoRead: boolean;
 }
 
@@ -35,7 +29,6 @@ export const DEFAULT_ACCESSIBILITY: AccessibilitySettings = {
   autoRead: false,
 };
 
-/** Maps a text size choice to a `data-text-size` value on <html>. */
 export const TEXT_SIZE_VALUES: Record<TextSize, string> = {
   sm: "sm",
   base: "base",
@@ -43,7 +36,6 @@ export const TEXT_SIZE_VALUES: Record<TextSize, string> = {
   xl: "xl",
 };
 
-/** Maps a speech rate choice to `speechSynthesis` rate. */
 export const SPEECH_RATE_VALUES: Record<SpeechRate, number> = {
   slow: 0.75,
   normal: 1,
@@ -107,10 +99,8 @@ export function applyAccessibilityToHtml(settings: AccessibilitySettings): void 
   // Text size — a data attribute drives the CSS scale in globals.css.
   root.dataset.textSize = TEXT_SIZE_VALUES[settings.textSize];
 
-  // High contrast.
   root.classList.toggle("high-contrast", settings.highContrast);
 
-  // Dyslexia-friendly font + spacing.
   root.classList.toggle("dyslexia", settings.dyslexiaMode);
 
   // Forced reduced motion (in addition to `prefers-reduced-motion`).

@@ -28,16 +28,11 @@ const mobileLinks = [
 const utilityLinkClasses =
   "inline-flex min-h-9 items-center rounded-md px-2.5 text-xs font-medium text-white/90 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-3 focus-visible:ring-white/50";
 
-/**
- * Premium two-bar site header (black utility bar + white main bar)
- * with a navigation links row. Renders auth state from the server session.
- */
 export async function SiteHeader() {
   const user = await getSessionUser();
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Utility bar */}
       <div className="bg-black text-white">
         <div className="mx-auto flex h-9 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <p className="truncate text-xs font-semibold tracking-wide">
@@ -68,7 +63,6 @@ export async function SiteHeader() {
         </div>
       </div>
 
-      {/* Main bar */}
       <div className="border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Logo tagline className="shrink-0" />
@@ -102,7 +96,6 @@ export async function SiteHeader() {
         </div>
       </div>
 
-      {/* Navigation links row */}
       <div className="hidden border-b bg-background md:block">
         <NavLinks />
       </div>

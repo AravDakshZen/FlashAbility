@@ -18,7 +18,6 @@ const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only run auth checks on routes we care about.
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
@@ -30,7 +29,6 @@ export async function proxy(request: NextRequest) {
 
   const { supabaseResponse, user } = await updateSession(request);
 
-  // Unauthenticated → protected route: send to login.
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -38,7 +36,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated → auth route: send to dashboard.
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";

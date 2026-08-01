@@ -15,7 +15,6 @@ type AuthCardProps = {
   footer?: ReactNode;
 };
 
-/** Shared shell for the authentication cards (login, signup, password flows). */
 export function AuthCard({ title, description, children, footer }: AuthCardProps) {
   return (
     <Card className="gap-6 shadow-sm">

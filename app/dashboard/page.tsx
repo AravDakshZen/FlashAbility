@@ -34,10 +34,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Speech,
 };
 
-/**
- * Classroom-style dashboard: courses with progress, the deck library,
- * and the gamification summary. Auth-protected landing after sign-in.
- */
 export default async function DashboardPage() {
   const user = await requireUser();
   const courses = getAllCourses();

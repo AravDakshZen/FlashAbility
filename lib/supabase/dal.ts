@@ -53,7 +53,6 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   };
 });
 
-/** Verifies the session or redirects to /login. */
 export const requireUser = cache(async (): Promise<SessionUser> => {
   const user = await getSessionUser();
   if (!user) redirect("/login");

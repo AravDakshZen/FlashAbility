@@ -16,7 +16,6 @@ const FILTERS: { id: Filter; label: string }[] = [
   })),
 ];
 
-/** Filterable deck grid — big touch targets for learners. */
 export function DeckGrid({ decks }: { decks: Deck[] }) {
   const [filter, setFilter] = useState<Filter>("all");
 

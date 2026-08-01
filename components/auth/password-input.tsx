@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 
 type PasswordInputProps = React.ComponentProps<typeof Input>;
 
-/** Password input with a show/hide visibility toggle. */
 export function PasswordInput({ className, ...props }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
 

@@ -113,7 +113,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
     return () => stopSpeaking();
   }, [index, phase, card.front]);
 
-  // Level-up detection.
   useEffect(() => {
     const lv = levelFromPoints(points).level;
     if (lv > prevLevel.current) {
@@ -246,7 +245,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
     setIndex((i) => i - 1);
   }, [phase, index]);
 
-  // Keyboard controls.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.repeat) return;
@@ -381,7 +379,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6">
-      {/* Top bar */}
       <div className="flex items-center justify-between gap-3">
         <Link
           href={`/decks/${deck.id}`}
@@ -400,7 +397,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         </p>
       </div>
 
-      {/* Progress */}
       <div
         className="mt-4 h-3 w-full overflow-hidden rounded-full bg-muted"
         role="progressbar"
@@ -416,7 +412,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         />
       </div>
 
-      {/* Level + points strip */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <p className="inline-flex items-center gap-1.5 font-medium">
           <Trophy className="size-4 text-yellow-500" aria-hidden="true" />
@@ -453,9 +448,7 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
                 : { duration: 0.45, ease: "easeInOut" }
             }
           >
-            {/* Front */}
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-6 overflow-hidden rounded-3xl border bg-card p-6 text-card-foreground shadow-lg [backface-visibility:hidden]"
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 overflow-hidden rounded-3xl border bg-card p-6 text-card-foreground shadow-lg [backface-visibility:hidden]"
               style={{ borderTop: `6px solid ${deck.accent}` }}
             >
               <CardVisual image={card.image} />
@@ -467,7 +460,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
               </span>
             </div>
 
-            {/* Back */}
             <div
               className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border bg-muted p-6 text-foreground [backface-visibility:hidden] [transform:rotateY(180deg)]"
             >
@@ -484,7 +476,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
           </motion.div>
         </button>
 
-        {/* Bottom-of-card navigation */}
         <div className="mt-5 flex w-full max-w-md items-center justify-between gap-3">
           <button
             type="button"
@@ -520,7 +511,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         </div>
       </div>
 
-      {/* Speak + flip controls */}
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <button
           type="button"
@@ -568,7 +558,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         Keys: Space listen · F flip · ← → cards · T try again
       </p>
 
-      {/* Floating points */}
       <AnimatePresence>
         {floatPoints ? (
           <motion.p
@@ -585,7 +574,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         ) : null}
       </AnimatePresence>
 
-      {/* Celebrations */}
       <AnimatePresence>
         {celebration ? (
           <div
@@ -638,7 +626,6 @@ export function PracticePlayer({ deck }: { deck: Deck }) {
         ) : null}
       </AnimatePresence>
 
-      {/* Screen-reader announcements */}
       <div className="sr-only" role="status" aria-live="polite">
         {announcement}
       </div>

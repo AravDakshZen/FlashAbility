@@ -5,7 +5,6 @@ import { Star, Trophy, Zap } from "lucide-react";
 
 import { getRewardsServerSnapshot, getRewardsSnapshot, levelFromPoints, subscribeRewards } from "@/lib/rewards";
 
-/** Gamification summary widget for the dashboard (reads the rewards store). */
 export function StarsSummary() {
   const state = useSyncExternalStore(
     subscribeRewards,

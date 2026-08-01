@@ -49,10 +49,6 @@ const RESOURCES = [
 const linkClasses =
   "relative inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-foreground after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100";
 
-/**
- * Desktop navigation links with an underline hover animation.
- * The active page keeps a persistent black underline.
- */
 export function NavLinks({ className }: { className?: string }) {
   const pathname = usePathname();
 
