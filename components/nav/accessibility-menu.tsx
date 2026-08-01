@@ -57,7 +57,7 @@ export function AccessibilityMenu({
   className,
 }: {
   /** "utility" renders a compact light trigger for the black utility bar. */
-  variant?: "utility" | "main";
+  variant?: "utility" | "main" | "floating";
   className?: string;
 }) {
   const { settings, update } = useAccessibility();
@@ -68,6 +68,8 @@ export function AccessibilityMenu({
   const sizeIndex = TEXT_SIZES.indexOf(settings.textSize);
   const canDecrease = sizeIndex > 0;
   const canIncrease = sizeIndex < TEXT_SIZES.length - 1;
+
+  const isFloating = variant === "floating";
 
   function changeTextSize(next: TextSize, message: string) {
     update("textSize", next);
@@ -99,29 +101,32 @@ export function AccessibilityMenu({
         <DropdownMenuTrigger
           render={
             <Button
-              variant={variant === "utility" ? "ghost" : "outline"}
-              size="sm"
+              variant={variant === "utility" ? "ghost" : isFloating ? "default" : "outline"}
+              size={isFloating ? "icon" : "sm"}
               aria-label="Accessibility options"
               className={cn(
                 "min-h-11 gap-2",
                 variant === "utility" &&
                   "h-7 min-h-7 gap-1.5 px-2.5 text-xs text-white hover:bg-white/10 hover:text-white",
+                isFloating &&
+                  "fixed bottom-4 right-4 z-50 size-14 rounded-full shadow-lg",
                 className
               )}
             >
               <Accessibility
-                className={cn("size-4", variant === "utility" && "size-3.5")}
+                className={cn("size-4", variant === "utility" && "size-3.5", isFloating && "size-6")}
                 aria-hidden="true"
               />
-              {variant === "utility" ? (
-                <span className="hidden sm:inline">Accessibility</span>
-              ) : (
-                <span className="hidden md:inline">Accessibility</span>
-              )}
+              {!isFloating &&
+                (variant === "utility" ? (
+                  <span className="hidden sm:inline">Accessibility</span>
+                ) : (
+                  <span className="hidden md:inline">Accessibility</span>
+                ))}
             </Button>
           }
         />
-        <DropdownMenuContent align="end" className="w-72 p-1.5">
+        <DropdownMenuContent align={isFloating ? "end" : "end"} className="w-72 p-1.5">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Accessibility</DropdownMenuLabel>
           </DropdownMenuGroup>

@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Logo } from "@/components/logo";
 import { MobileNav } from "@/components/mobile-nav";
-import { AccessibilityMenu } from "@/components/nav/accessibility-menu";
 import { NavLinks } from "@/components/nav/nav-links";
 import { UserMenu } from "@/components/user-menu";
 import { buttonVariants } from "@/components/ui/button";
@@ -45,7 +44,6 @@ export async function SiteHeader() {
             FlashAbility
           </p>
           <div className="flex shrink-0 items-center gap-1">
-            <AccessibilityMenu variant="utility" />
             <span className="mx-1 h-3.5 w-px bg-white/25" aria-hidden="true" />
             {user ? (
               <>
@@ -75,7 +73,6 @@ export async function SiteHeader() {
         <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Logo tagline className="shrink-0" />
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <AccessibilityMenu className="hidden sm:inline-flex" />
             {user ? (
               <UserMenu user={user} />
             ) : (

@@ -3,6 +3,7 @@ import { Atkinson_Hyperlegible, Geist_Mono, Inter } from "next/font/google";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AccessibilityProvider } from "@/providers/accessibility-provider";
+import { AccessibilityMenu } from "@/components/nav/accessibility-menu";
 import { Toaster } from "@/components/ui/toast";
 import { siteConfig } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -105,6 +106,7 @@ export default function RootLayout({
           <AccessibilityProvider>
             <AuthProvider>
               {children}
+              <AccessibilityMenu variant="floating" />
               <Toaster />
             </AuthProvider>
           </AccessibilityProvider>
