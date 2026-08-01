@@ -1,5 +1,5 @@
 import { courses, decks } from "@/lib/data/decks";
-import type { Course, Deck, DeckCategory } from "@/types/decks";
+import type { Course, Deck } from "@/types/decks";
 
 /** All decks, in their curated order. */
 export function getAllDecks(): Deck[] {
@@ -10,10 +10,6 @@ export function getAllDecks(): Deck[] {
 export function getDeckById(id: string): Deck | undefined {
   const normalized = id.trim().toLowerCase();
   return decks.find((deck) => deck.id.toLowerCase() === normalized);
-}
-
-export function getDecksByCategory(category: DeckCategory): Deck[] {
-  return decks.filter((deck) => deck.category === category);
 }
 
 /** Decks in the same category, excluding the given deck. */

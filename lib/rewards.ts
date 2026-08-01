@@ -104,14 +104,6 @@ export function addPoints(n: number): RewardState {
   return persist(state);
 }
 
-export function loadStars(): number {
-  return loadRewards().stars;
-}
-
-export function loadPoints(): number {
-  return loadRewards().points;
-}
-
 /** Point thresholds and titles for learner levels. */
 const LEVELS = [
   { min: 0, title: "Star Learner" },
