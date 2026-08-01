@@ -16,6 +16,8 @@ type PracticeCardProps = {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   practiceLevel?: PracticeLevel;
+  /** When set, sizes the card to this available height (px) so it fits without scrolling. */
+  fitHeight?: number;
 };
 
 const SWIPE_THRESHOLD = 60;
@@ -61,10 +63,17 @@ export function PracticeCard({
   onSwipeLeft,
   onSwipeRight,
   practiceLevel = 2,
+  fitHeight,
 }: PracticeCardProps) {
   const hideFrontWord = practiceLevel === 3;
   const showHint = practiceLevel === 1;
   const action = actionMotion(card.front);
+  // Card is aspect 4:5. When given a fit height, width = 0.8 * height so it
+  // fills the space exactly; otherwise fall back to the viewport heuristic.
+  const cardWidth =
+    fitHeight && fitHeight > 0
+      ? `min(28rem, 100%, ${Math.max(220, fitHeight * 0.8)}px)`
+      : "min(28rem, 100%, max(14rem, calc((100dvh - 340px) * 0.8)))";
 
   return (
     <motion.div
@@ -100,7 +109,7 @@ export function PracticeCard({
       }
       whileTap={reduceMotion ? {} : { scale: 0.97 }}
       className="group/card relative aspect-[4/5] cursor-grab select-none touch-pan-y rounded-3xl outline-none active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring"
-      style={{ width: "min(28rem, 100%, max(14rem, calc((100dvh - 340px) * 0.8)))" }}
+      style={{ width: cardWidth, maxHeight: "100%" }}
     >
       <div
         className="pointer-events-none absolute -inset-3 rounded-[2rem] opacity-0 blur-2xl transition-opacity duration-500 group-focus-visible/card:opacity-60"

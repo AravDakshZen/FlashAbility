@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Check, RotateCcw, Volume2, X } from "l
 import { PracticeCard } from "@/components/decks/practice-card";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/tts";
 import { useReducedMotionSafe } from "@/lib/hooks/use-reduced-motion";
+import { useElementSize } from "@/lib/hooks/use-element-size";
 import type { Deck } from "@/types/decks";
 
 export function LearnPlayer({ deck }: { deck: Deck }) {
@@ -66,24 +67,24 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
     function onKey(e: KeyboardEvent) {
       if (e.repeat) return;
 
-      // Space activates the focused button natively — only use it to speak
-      // when focus is not on an interactive element.
+      // Space flips the flashcard. Interactive elements (buttons/links/the card
+      // itself, which is role=button) handle their own Space behaviour, so we
+      // only flip when focus is not on one of them — prevents double-toggling.
       if (e.key === " ") {
         const el = e.target instanceof HTMLElement ? e.target : null;
-        if (el && el.closest("button, a, input, textarea, select, [contenteditable]"))
+        if (
+          el &&
+          el.closest(
+            "button, a, [role='button'], input, textarea, select, [contenteditable]"
+          )
+        )
           return;
         e.preventDefault();
-        speakCurrent();
+        setFlipped((f) => !f);
         return;
       }
 
       switch (e.key) {
-        case "f":
-        case "F":
-        case "r":
-        case "R":
-          setFlipped((f) => !f);
-          break;
         case "ArrowRight":
           goNext();
           break;
@@ -99,10 +100,11 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
   }, [speakCurrent, goNext, goPrev]);
 
   const progressPct = Math.round(((index + 1) / total) * 100);
+  const { ref: cardAreaRef, size: cardAreaSize } = useElementSize<HTMLDivElement>();
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6">
-      <div className="flex items-center justify-between gap-3">
+    <main className="mx-auto flex h-dvh max-h-dvh w-full max-w-3xl flex-col overflow-hidden px-4 py-4 sm:px-6">
+      <div className="flex shrink-0 items-center justify-between gap-3">
         <Link
           href={`/decks/${deck.id}`}
           aria-label="Exit learning"
@@ -121,7 +123,7 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
       </div>
 
       <div
-        className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-muted"
+        className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted shrink-0"
         role="progressbar"
         aria-valuemin={1}
         aria-valuemax={total}
@@ -134,7 +136,10 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
         />
       </div>
 
-      <div className="mt-6 flex min-h-0 flex-1 flex-col items-center justify-center">
+      <div
+        ref={cardAreaRef}
+        className="mt-3 flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden"
+      >
         <PracticeCard
           card={card}
           accent={deck.accent}
@@ -143,6 +148,7 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
           onFlip={() => setFlipped((f) => !f)}
           onSwipeLeft={goNext}
           onSwipeRight={goPrev}
+          fitHeight={cardAreaSize.height}
         />
 
         <div className="mt-5 flex w-full max-w-md items-center justify-between gap-3">
@@ -170,12 +176,12 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <div className="mt-3 flex shrink-0 flex-wrap items-center justify-center gap-2">
         <button
           type="button"
           onClick={speakCurrent}
           aria-label={`Hear ${flipped ? "sentence" : card.front} spoken aloud`}
-          className="inline-flex min-h-12 items-center gap-2 rounded-full border bg-background px-6 text-base font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-background px-5 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
         >
           {speaking ? (
             <span className="flex items-end gap-0.5" aria-hidden="true">
@@ -200,22 +206,22 @@ export function LearnPlayer({ deck }: { deck: Deck }) {
         <button
           type="button"
           onClick={() => setFlipped((f) => !f)}
-          className="inline-flex min-h-12 items-center gap-2 rounded-full border bg-background px-6 text-base font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-background px-5 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
         >
           <RotateCcw className="size-5" aria-hidden="true" />
           Reveal
         </button>
         <Link
           href={`/decks/${deck.id}/test`}
-          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-emerald-600 px-6 text-base font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-emerald-500"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-emerald-600 px-5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-emerald-500"
         >
           <Check className="size-5" aria-hidden="true" />
           Ready to Test?
         </Link>
       </div>
 
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        Keys: Tab navigate · Space listen · R reveal · ← → previous / next · Backspace back
+      <p className="mt-2 shrink-0 text-center text-xs text-muted-foreground">
+        Keys: Space flip · ← → previous / next · Backspace back
       </p>
     </main>
   );

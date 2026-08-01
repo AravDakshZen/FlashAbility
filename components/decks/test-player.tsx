@@ -392,9 +392,9 @@ export function TestPlayer({ deck }: { deck: Deck }) {
   const progressPct = Math.round(((questionIndex + 1) / total) * 100);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6 sm:px-6">
+    <main className="mx-auto flex h-dvh max-h-dvh w-full max-w-3xl flex-col overflow-hidden px-4 py-4 sm:px-6">
       {/* Header & Difficulty Selector */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex shrink-0 items-center justify-between gap-3">
         <Link
           href={`/decks/${deck.id}`}
           aria-label="Exit test"
@@ -437,7 +437,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
 
       {/* Progress Bar */}
       <div
-        className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted"
+        className="mt-3 h-2.5 w-full shrink-0 overflow-hidden rounded-full bg-muted"
         role="progressbar"
         aria-valuemin={1}
         aria-valuemax={total}
@@ -451,7 +451,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
       </div>
 
       {/* Level & Points Bar */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+      <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-2 text-sm">
         <p className="inline-flex items-center gap-1.5 font-medium">
           <Trophy className="size-4 text-yellow-500" aria-hidden="true" />
           Lv {level.level} · {level.title}
@@ -468,8 +468,10 @@ export function TestPlayer({ deck }: { deck: Deck }) {
         </p>
       </div>
 
+      {/* Main content: prompt + answer options + next control fill the space */}
+      <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Question Prompt */}
-      <div className="mt-6 flex flex-col items-center text-center">
+      <div className="mt-1 flex shrink-0 flex-col items-center text-center">
         <div className="flex items-center gap-3">
           <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
             {currentQ.promptText}
@@ -511,14 +513,14 @@ export function TestPlayer({ deck }: { deck: Deck }) {
 
       {/* For counting questions, show the set of objects to count */}
       {currentQ.mode === "count" ? (
-        <div className="mt-8 flex min-h-48 items-center justify-center rounded-3xl border border-border/60 bg-gradient-to-b from-muted/40 to-background p-6">
+        <div className="mt-2 flex min-h-16 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-gradient-to-b from-muted/40 to-background px-4 py-2">
           <CardVisual image={currentQ.card.image} />
         </div>
       ) : null}
 
       {/* Options Grid */}
       {currentQ.mode === "count" ? (
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6">
+        <div className="mt-3 grid min-h-0 flex-1 auto-rows-fr grid-cols-2 gap-3">
           {currentQ.options.map((option) => {
             const isSelected = selectedOptionId === option.id;
             const isCorrect = option.id === `count:${currentQ.count}`;
@@ -546,9 +548,9 @@ export function TestPlayer({ deck }: { deck: Deck }) {
                 disabled={isAnswered}
                 onClick={() => handleSelectOption(option.id)}
                 aria-label={`Option: ${option.number}`}
-                className={`relative flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+                className={`relative flex min-h-0 flex-col items-center justify-center gap-1 rounded-3xl p-3 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
               >
-                <span className="text-7xl font-black leading-none sm:text-8xl">
+                <span className="text-6xl font-black leading-none sm:text-7xl">
                   {option.number}
                 </span>
                 <span className="text-lg font-semibold capitalize text-muted-foreground">
@@ -566,7 +568,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
           })}
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6">
+        <div className="mt-3 grid min-h-0 flex-1 auto-rows-fr grid-cols-2 gap-3">
           {currentQ.options.map((option) => {
             const isSelected = selectedOptionId === option.id;
             const isCorrect = option.id === currentQ.card.id;
@@ -594,9 +596,9 @@ export function TestPlayer({ deck }: { deck: Deck }) {
                 disabled={isAnswered}
                 onClick={() => handleSelectOption(option.id)}
                 aria-label={`Option: ${option.front}`}
-                className={`relative flex aspect-[4/3] flex-col items-center justify-center rounded-3xl p-5 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
+                className={`relative flex min-h-0 flex-col items-center justify-center rounded-3xl p-3 shadow-sm backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring ${cardStyle}`}
               >
-                <div className="flex size-full items-center justify-center drop-shadow-sm">
+                <div className="flex min-h-0 items-center justify-center drop-shadow-sm">
                   <CardVisual image={option.image} />
                 </div>
 
@@ -650,6 +652,7 @@ export function TestPlayer({ deck }: { deck: Deck }) {
           </button>
         </motion.div>
       ) : null}
+      </div>
 
       <AnimatePresence>
         {floatPoints ? (
