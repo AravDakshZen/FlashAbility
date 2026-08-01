@@ -33,6 +33,7 @@ export function CardVisual({ image }: { image?: FlashCardImage }) {
             src={image.value}
             alt=""
             fill
+            loading="eager"
             sizes="192px"
             className="object-contain"
           />

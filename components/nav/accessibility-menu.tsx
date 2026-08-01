@@ -1,22 +1,20 @@
 "use client";
 
-import { useCallback, useRef } from "react";
 import {
   Accessibility,
   Check,
   Contrast,
-  Gauge,
   Keyboard,
-  Minus,
   Moon,
-  Plus,
-  RotateCcw,
   Sun,
   Type,
   Volume2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
+import { SpeechRateGroup } from "@/components/nav/speech-rate-group";
+import { TextSizeControls } from "@/components/nav/text-size-controls";
+import { useAnnouncer } from "@/components/nav/use-announcer";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,24 +25,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SPEECH_RATE_LABELS,
-  type SpeechRate,
-  type TextSize,
-} from "@/lib/accessibility";
+import { type SpeechRate, type TextSize } from "@/lib/accessibility";
 import { useAccessibility } from "@/providers/accessibility-provider";
 import { cn } from "@/lib/utils";
 
 const TEXT_SIZES: readonly TextSize[] = ["sm", "base", "lg", "xl"];
-const SPEECH_RATES: readonly SpeechRate[] = ["slow", "normal", "fast"];
-
-function useAnnouncer() {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const announce = useCallback((message: string) => {
-    if (ref.current) ref.current.textContent = message;
-  }, []);
-  return { ref, announce };
-}
 
 export function AccessibilityMenu({
   variant = "main",
@@ -58,9 +43,6 @@ export function AccessibilityMenu({
   const { ref: liveRef, announce } = useAnnouncer();
 
   const isDark = resolvedTheme === "dark";
-  const sizeIndex = TEXT_SIZES.indexOf(settings.textSize);
-  const canDecrease = sizeIndex > 0;
-  const canIncrease = sizeIndex < TEXT_SIZES.length - 1;
 
   const isFloating = variant === "floating";
 
@@ -76,6 +58,11 @@ export function AccessibilityMenu({
     const next = !settings[key];
     update(key, next);
     announce(`${label} ${next ? "enabled" : "disabled"}`);
+  }
+
+  function changeSpeechRate(rate: SpeechRate) {
+    update("speechRate", rate);
+    announce(`Speech rate set to ${rate}`);
   }
 
   function focusFirstNavLink() {
@@ -126,48 +113,12 @@ export function AccessibilityMenu({
 
           <DropdownMenuGroup>
             <DropdownMenuLabel className="pt-3">Text Size</DropdownMenuLabel>
-            <div className="grid grid-cols-3 gap-1">
-            <DropdownMenuItem
-              onClick={() =>
-                canDecrease
-                  ? changeTextSize(
-                      TEXT_SIZES[sizeIndex - 1],
-                      "Text size decreased"
-                    )
-                  : announce("Text size is already at its smallest")
-              }
-              disabled={!canDecrease}
-              className="flex-col gap-1 py-2.5 text-xs"
-            >
-              <Minus className="size-4" aria-hidden="true" />
-              Decrease
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                canIncrease
-                  ? changeTextSize(
-                      TEXT_SIZES[sizeIndex + 1],
-                      "Text size increased"
-                    )
-                  : announce("Text size is already at its largest")
-              }
-              disabled={!canIncrease}
-              className="flex-col gap-1 py-2.5 text-xs"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Increase
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                changeTextSize("base", "Text size reset to default")
-              }
-              disabled={settings.textSize === "base"}
-              className="flex-col gap-1 py-2.5 text-xs"
-            >
-              <RotateCcw className="size-4" aria-hidden="true" />
-              Reset
-            </DropdownMenuItem>
-          </div>
+            <TextSizeControls
+              sizes={TEXT_SIZES}
+              textSize={settings.textSize}
+              onChange={changeTextSize}
+              onAnnounce={announce}
+            />
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
@@ -233,25 +184,10 @@ export function AccessibilityMenu({
 
           <DropdownMenuGroup>
             <DropdownMenuLabel className="pt-3">Speech Rate</DropdownMenuLabel>
-            {SPEECH_RATES.map((rate) => (
-            <DropdownMenuItem
-              key={rate}
-              onClick={() => {
-                update("speechRate", rate);
-                announce(
-                  `Speech rate set to ${SPEECH_RATE_LABELS[rate].toLowerCase()}`
-                );
-              }}
-              disabled={settings.speechRate === rate}
-              className="min-h-11"
-            >
-              <Gauge aria-hidden="true" />
-              {SPEECH_RATE_LABELS[rate]}
-              {settings.speechRate === rate ? (
-                <Check className="ml-auto" aria-hidden="true" />
-              ) : null}
-            </DropdownMenuItem>
-          ))}
+            <SpeechRateGroup
+              speechRate={settings.speechRate}
+              onSelect={changeSpeechRate}
+            />
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
