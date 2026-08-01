@@ -181,9 +181,18 @@ export default function HomePage() {
                   Start Learning <ArrowRight />
                 </Link>
                 <Link
-                  href="/#features"
+                  href="/decks"
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
+                    "px-6"
+                  )}
+                >
+                  Browse Decks
+                </Link>
+                <Link
+                  href="/#features"
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "lg" }),
                     "px-6"
                   )}
                 >

@@ -132,9 +132,14 @@
     @apply font-sans scroll-smooth;
   }
 
-  /* Anchor targets clear the sticky navbar. */
+  /* Anchor targets clear the sticky navbar (utility bar + main bar + links). */
   section[id] {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: 7rem;
+  }
+  @media (min-width: 768px) {
+    section[id] {
+      scroll-margin-top: 11rem;
+    }
   }
 
   ::selection {

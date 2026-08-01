@@ -16,7 +16,12 @@ import {
 import { logout } from "@/services/auth-service";
 import type { SessionUser } from "@/types/auth";
 
-type NavLink = { label: string; href: string };
+type NavItem = { label: string; href: string };
+type NavLink = NavItem | { label: string; children: readonly NavItem[] };
+
+function isSection(link: NavLink): link is { label: string; children: readonly NavItem[] } {
+  return "children" in link;
+}
 
 /** Mobile slide-in navigation shown below the `md` breakpoint. */
 export function MobileNav({
@@ -42,22 +47,40 @@ export function MobileNav({
           </Button>
         }
       />
-      <SheetContent side="right" className="w-72">
+      <SheetContent side="right" className="w-80 overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <Logo />
         </SheetHeader>
-        <nav className="flex flex-col gap-1 px-4" aria-label="Mobile">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="flex flex-col gap-1 px-4 pt-4" aria-label="Mobile">
+          {links.map((link) =>
+            isSection(link) ? (
+              <div key={link.label} className="mt-3">
+                <p className="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground">
+                  {link.label}
+                </p>
+                {link.children.map((child) => (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {child.label}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </nav>
         <div className="mt-auto flex flex-col gap-2 border-t px-4 py-4">
           {user ? (
