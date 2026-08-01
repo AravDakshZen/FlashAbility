@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { label: "Home", href: "/", match: "/" },
-  { label: "Flashcards", href: "/decks", match: "/decks" },
   { label: "Courses", href: "/courses", match: "/courses" },
   { label: "Progress", href: "/dashboard", match: "/dashboard" },
   { label: "About", href: "/#about", match: "/#about" },

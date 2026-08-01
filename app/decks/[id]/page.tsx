@@ -74,11 +74,11 @@ export default async function DeckDetailPage({
       <SiteHeader />
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
         <Link
-          href="/decks"
+          href="/courses"
           className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          All decks
+          All courses
         </Link>
 
         <header className="mt-6 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">

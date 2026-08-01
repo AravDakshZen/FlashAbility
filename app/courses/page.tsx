@@ -10,10 +10,11 @@ import {
 import type { Metadata } from "next";
 
 import { CourseProgress } from "@/components/decks/course-progress";
+import { DeckGrid } from "@/components/decks/deck-grid";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getAllCourses, getCourseDecks } from "@/lib/decks";
+import { getAllCourses, getAllDecks, getCourseDecks } from "@/lib/decks";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   PawPrint,
@@ -29,6 +30,7 @@ export const metadata: Metadata = {
 
 export default function CoursesPage() {
   const courses = getAllCourses();
+  const decks = getAllDecks();
 
   return (
     <>
@@ -90,6 +92,21 @@ export default function CoursesPage() {
               </Link>
             );
           })}
+        </section>
+
+        <section aria-label="Deck library" className="mt-16">
+          <div className="max-w-2xl">
+            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+              Deck Library
+            </h2>
+            <p className="mt-2 text-pretty text-muted-foreground">
+              Browse the full flashcard library — filter by category, then tap a
+              deck to practice or open e-paper mode.
+            </p>
+          </div>
+          <div className="mt-6">
+            <DeckGrid decks={decks} />
+          </div>
         </section>
       </main>
       <SiteFooter />

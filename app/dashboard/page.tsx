@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { DeckCard } from "@/components/decks/deck-card";
+import { DeckGrid } from "@/components/decks/deck-grid";
 import { StarsSummary } from "@/components/decks/stars-summary";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
             <p className="mt-2 text-muted-foreground">{user.email}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/learn" className={cn(buttonVariants(), "min-h-11 gap-2")}>
+            <Link href="/courses" className={cn(buttonVariants(), "min-h-11 gap-2")}>
               <Play className="size-4" aria-hidden="true" />
               Start Learning
             </Link>
@@ -128,25 +128,16 @@ export default async function DashboardPage() {
         </section>
 
         <section aria-label="Deck library" className="mt-12">
-          <div className="flex items-center justify-between">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
-              All Decks
-            </h2>
-            <Link
-              href="/decks"
-              className="inline-flex min-h-11 items-center gap-1 rounded-md px-3 text-sm font-medium text-primary hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              Browse all
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
+          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            Deck Library
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Every card deck, filterable by category. Tap a deck to practice or
+            open e-paper mode.
+          </p>
+          <div className="mt-4">
+            <DeckGrid decks={decks} />
           </div>
-          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {decks.slice(0, 6).map((deck) => (
-              <li key={deck.id} className="h-full">
-                <DeckCard deck={deck} className="h-full" />
-              </li>
-            ))}
-          </ul>
         </section>
       </main>
       <SiteFooter />

@@ -4,7 +4,6 @@ import { Logo } from "@/components/logo";
 import { MobileNav } from "@/components/mobile-nav";
 import { AccessibilityMenu } from "@/components/nav/accessibility-menu";
 import { NavLinks } from "@/components/nav/nav-links";
-import { SearchBar } from "@/components/nav/search-bar";
 import { UserMenu } from "@/components/user-menu";
 import { buttonVariants } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/supabase/dal";
@@ -12,7 +11,6 @@ import { cn } from "@/lib/utils";
 
 const mobileLinks = [
   { label: "Home", href: "/" },
-  { label: "Flashcards", href: "/decks" },
   { label: "Courses", href: "/courses" },
   { label: "Progress", href: "/dashboard" },
   {
@@ -76,7 +74,6 @@ export async function SiteHeader() {
       <div className="border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Logo tagline className="shrink-0" />
-          <SearchBar className="hidden max-w-xl flex-1 lg:block" />
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <AccessibilityMenu className="hidden sm:inline-flex" />
             {user ? (
