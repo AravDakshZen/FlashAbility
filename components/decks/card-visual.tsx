@@ -17,9 +17,14 @@ const SHAPE_PATHS: Record<string, React.ReactNode> = {
   cross: <path d="M35 10 H65 V35 H90 V65 H65 V90 H35 V65 H10 V35 H35 Z" />,
 };
 
-const graphemeSplit = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+const graphemeSplit = typeof Intl !== "undefined" && "Segmenter" in Intl
+  ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+  : null;
 
 function splitEmojis(value: string): string[] {
+  if (!graphemeSplit) {
+    return Array.from(value);
+  }
   return [...graphemeSplit.segment(value)].map((s) => s.segment);
 }
 
@@ -71,7 +76,7 @@ export function CardVisual({
 
   switch (image.type) {
     case "url":
-      return (
+      return ( 
         <span className={`relative block ${s.url}`}>
           <Image
             src={image.value}
