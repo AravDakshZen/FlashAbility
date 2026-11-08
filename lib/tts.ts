@@ -16,13 +16,53 @@ export interface SpeakOptions {
   onEnd?: () => void;
 }
 
+// Indian English is the only voice the app targets.
+export const DEFAULT_LANG = "en-IN";
+
+// Read numerals as English words so digits sound correct in Indian English
+// (e.g. "10" -> "ten", not a list of digits).
+const ONES = [
+  "zero", "one", "two", "three", "four", "five",
+  "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+  "sixteen", "seventeen", "eighteen", "nineteen",
+];
+const TENS = [
+  "", "", "twenty", "thirty", "forty", "fifty",
+  "sixty", "seventy", "eighty", "ninety",
+];
+
+function numberToWords(n: number): string {
+  if (n < 20) return ONES[n] ?? String(n);
+  if (n < 100) {
+    const t = Math.floor(n / 10);
+    const o = n % 10;
+    return o === 0 ? TENS[t] : `${TENS[t]} ${ONES[o]}`;
+  }
+  return String(n);
+}
+
+function expandNumbers(text: string): string {
+  return text.replace(/\b\d{1,2}\b/g, (m) => numberToWords(Number(m)));
+}
+
+// Remove emojis and symbols so TTS only reads the words (not "cow emoji", etc).
+function stripEmojis(text: string): string {
+  return text
+    .replace(
+      /[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{1F3FB}-\u{1F3FF}]/gu,
+      " "
+    )
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
 export function isTtsSupported(): boolean {
   if (typeof window === "undefined") return false;
   return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 }
 
 const PREFERRED_LANGS = ["en-IN", "en-GB", "en-US", "hi-IN"];
-
 let cachedVoices: SpeechSynthesisVoice[] | null = null;
 let voicesListenerAttached = false;
 
@@ -67,11 +107,12 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
   if (!isTtsSupported() || !text.trim()) return;
 
   const synth = window.speechSynthesis;
-  const utterance = new SpeechSynthesisUtterance(text);
+  const utterance = new SpeechSynthesisUtterance(stripEmojis(expandNumbers(text)));
 
   const voice = pickVoice(opts.lang);
   if (voice) utterance.voice = voice;
-  utterance.lang = opts.lang ?? voice?.lang ?? "en-IN";
+  // Always pronounce in Indian English (unless a lang is explicitly given).
+  utterance.lang = opts.lang ?? DEFAULT_LANG;
   utterance.rate = opts.rate ?? 0.9;
   utterance.pitch = opts.pitch ?? 1.05;
   if (opts.onStart) utterance.onstart = () => opts.onStart?.();

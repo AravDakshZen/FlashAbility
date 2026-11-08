@@ -87,7 +87,7 @@ export default async function DashboardPage() {
                   href={`/courses/${course.id}`}
                   className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
                 >
-                  <Card className="h-full overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                  <Card className="h-full overflow-hidden transition-shadow duration-200 hover:shadow-md">
                     <div
                       className="flex h-24 items-center justify-center"
                       style={{ backgroundColor: `${course.accent}22` }}

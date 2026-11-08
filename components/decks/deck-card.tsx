@@ -60,7 +60,7 @@ export function DeckCard({
       )}
       aria-label={`${deck.title} deck, ${deck.cards.length} cards`}
     >
-      <Card className="h-full transition-all duration-200 group-hover/deck:-translate-y-0.5 group-hover/deck:shadow-md">
+      <Card className="h-full transition-shadow duration-200 group-hover/deck:shadow-md">
         <CardHeader>
           <div className="flex items-start justify-between gap-3">
             <span
